@@ -1,18 +1,12 @@
 {
-  "name": "party-server",
-  "version": "1.0.0",
-  "description": "Node.js/Express backend with PostgreSQL",
-  "main": "src/index.js",
+  "name": "partyhub",
+  "private": true,
+  "description": "Jackbox-style party game platform",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "dotenv": "^16.4.5",
-    "express": "^4.21.0",
-    "pg": "^8.12.0"
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "start": "npm run start --prefix backend"
   }
 }
