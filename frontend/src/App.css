@@ -2,6 +2,7 @@
   color: #888;
 }
 
+
 @media (prefers-color-scheme: light) {
   .tagline {
     color: #666;
