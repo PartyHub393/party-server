@@ -48,6 +48,17 @@ function getPlayers(roomCode) {
   return room ? room.players : []
 }
 
+function removeRoom(roomCode) {
+  const code = (roomCode || '').toUpperCase();
+
+  if (rooms.has(code)) {
+    rooms.delete(code);
+    console.log(`Room ${code} deleted.`);
+    return true;
+  }
+  return false;
+}
+
 module.exports = {
   createRoom,
   getRoom,
@@ -56,4 +67,5 @@ module.exports = {
   removePlayer,
   getPlayers,
   rooms,
+  removeRoom
 }

@@ -22,8 +22,15 @@ export default function JoinScreen() {
       setError(message || 'Could not join room')
       setJoining(false)
     })
+    socket.on('room_closed', ({ message }) => {
+      setError(message || 'Host closed the room!')
+      setJoined(false)
+      setJoining(false)
+    })
     return () => {
-      socket.off('join_success').off('join_error')
+      socket.off('join_success')
+      socket.off('join_error')  
+      socket.off('room_closed')
     }
   }, [socket])
 

@@ -21,7 +21,18 @@ export default function HostScreen() {
     socket.on('player_joined', ({ players: nextPlayers }) => {
       setPlayers(nextPlayers || [])
     })
+
+    const handleTabClose = (event) => {
+      // Close the lobby
+      socket.emit('host_closed')
+      event.preventDefault()
+      event.returnValue = '' 
+    }
+
+    window.addEventListener('beforeunload', handleTabClose)
     return () => {
+      // In case the user goes to another page/tab
+      socket.emit('host_closed')
       socket.off('host_joined').off('host_error').off('player_joined')
     }
   }, [socket, roomCode])

@@ -11,6 +11,7 @@ const {
   addPlayer,
   removePlayer,
   getPlayers,
+  removeRoom,
 } = require('./rooms');
 
 const app = express();
@@ -79,6 +80,19 @@ io.on('connection', (socket) => {
       if (players !== null) {
         io.to(code).emit('player_joined', { players });
       }
+    });
+  });
+
+  socket.on('host_closed', () => {
+    const roomsJoined = Array.from(socket.rooms).filter((r) => r !== socket.id);
+    roomsJoined.forEach((code) => {
+      io.to(code).emit('room_closed', { 
+        message: 'The host has ended the session.' 
+      });
+
+      io.in(code).socketsLeave(code);
+
+      removeRoom(code);
     });
   });
 });
