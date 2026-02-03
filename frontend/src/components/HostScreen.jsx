@@ -95,6 +95,18 @@ export default function HostScreen() {
       </div>
 
       <div className="host-screen__actions">
+        {roomCode && (
+          <button
+            type="button"
+            className="host-screen__start-btn"
+            onClick={ console.log("Game started!; TODO" )}
+            disabled={players.length <= 2}
+            title={players.length <= 2 ? "Waiting for more players (3+ required)" : ""}
+          >
+            Start Game
+          </button>
+        )}
+
         <button
           type="button"
           className="host-screen__generate-btn"

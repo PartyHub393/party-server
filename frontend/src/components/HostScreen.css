@@ -54,6 +54,37 @@
   opacity: 0.7;
 }
 
+
+
+.host-screen__start-btn {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #1a0a2e;
+  background: linear-gradient(135deg, #ffd54f 0%, #ffb300 100%);
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(255, 179, 0, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  width:100%;
+}
+
+.host-screen__start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(255, 179, 0, 0.5);
+}
+
+.host-screen__start-btn:active {
+  transform: translateY(0);
+}
+
+.host-screen__start-btn:disabled {
+  background: linear-gradient(135deg, #acac7f 0%, #3b3a36 100%);
+}
+
+
 .host-screen__generate-btn {
   padding: 1rem 2rem;
   font-size: 1.1rem;
