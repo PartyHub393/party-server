@@ -4,6 +4,7 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const { pool } = require('./db');
+const { hash } = require('bcrypt')
 const {
   createRoom,
   getRoom,
@@ -42,6 +43,40 @@ app.post('/api/rooms', (req, res) => {
   const roomCode = createRoom();
   res.json({ roomCode });
 });
+
+app.post('/api/createaccount', async (req, res) => {
+  const { username, email, password } = req.body;
+
+  if (!username || !email || !password) {
+    return res.status(400).json({ error: 'Username, email, and password are required.' });
+  }
+
+  try {
+    const passwordHash = await hash(password, 10);
+
+    const queryText = `
+      INSERT INTO users (username, email, password_hash)
+      VALUES ($1, $2, $3)
+      RETURNING id, username, email, created_at;
+    `;
+
+    const values = [username, email, passwordHash];
+    const result = await pool.query(queryText, values);
+
+    res.status(201).json({
+      message: 'User created successfully',
+      user: result.rows[0]
+    });
+    
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'Username or Email already exists.' });
+    }
+    
+    console.error('Database Error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+})
 
 io.on('connection', (socket) => {
   socket.on('host_room', (roomCode) => {
