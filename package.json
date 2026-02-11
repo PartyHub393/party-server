@@ -8,5 +8,8 @@
     "dev:frontend": "npm run dev --prefix frontend",
     "build": "npm run build --prefix frontend",
     "start": "npm run start --prefix backend"
+  },
+  "dependencies": {
+    "lucide-react": "^0.563.0"
   }
 }

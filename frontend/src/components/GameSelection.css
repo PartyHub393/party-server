@@ -1,0 +1,135 @@
+.games-page {
+    min-height: 100vh;
+    background: linear-gradient(
+      to bottom right,
+      #f3e8ff,
+      #e0f2fe,
+      #fce7f3
+    );
+    padding: 3rem 1.5rem;
+  }
+  
+  .games-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  
+  .games-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #6d28d9;
+    margin-bottom: 0.5rem;
+  }
+  
+  .games-subtitle {
+    color: #4b5563;
+    margin-bottom: 3rem;
+    font-size: 1.1rem;
+  }
+  
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+  }
+  
+  .game-card {
+    background: white;
+    border-radius: 1.5rem;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    text-align: left;
+  }
+  
+  .game-card__header {
+    padding: 2rem;
+    color: white;
+  }
+  
+  .scavenger {
+    background: linear-gradient(135deg, #9333ea, #2563eb);
+  }
+  
+  .trivia {
+    background: linear-gradient(135deg, #f97316, #ec4899);
+  }
+  
+  .game-card__header h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  
+  .game-card__header p {
+    margin: 0;
+    font-size: 1rem;
+    opacity: 0.95;
+  }
+  
+  .game-card__body {
+    padding: 2rem;
+  }
+  
+  .game-meta {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.95rem;
+    color: #374151;
+    margin-bottom: 1.5rem;
+  }
+  
+  .game-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2rem;
+  }
+  
+  .game-features li {
+    margin-bottom: 0.6rem;
+    position: relative;
+    padding-left: 1.2rem;
+    color: #4b5563;
+  }
+  
+  .game-features.purple li::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background: #9333ea;
+    border-radius: 50%;
+    position: absolute;
+    left: 0;
+    top: 7px;
+  }
+  
+  .game-features.orange li::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background: #f97316;
+    border-radius: 50%;
+    position: absolute;
+    left: 0;
+    top: 7px;
+  }
+  
+  .game-link {
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: opacity 0.2s ease;
+  }
+  
+  .purple-link {
+    color: #9333ea;
+  }
+  
+  .orange-link {
+    color: #f97316;
+  }
+  
+  .game-link:hover {
+    opacity: 0.7;
+  }
+  
