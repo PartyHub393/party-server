@@ -4,7 +4,7 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const { pool } = require('./db');
-const { hash } = require('bcrypt')
+const { hash, compare } = require('bcrypt')
 const {
   createRoom,
   getRoom,
@@ -74,6 +74,43 @@ app.post('/api/createaccount', async (req, res) => {
     }
     
     console.error('Database Error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+})
+
+app.post('/api/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required.' });
+  }
+
+  const queryText = 'SELECT * FROM users WHERE username = $1';
+  const result = await pool.query(queryText, [username]);
+
+  if (result.rows.length === 0) {
+    return res.status(401).json({ error: 'Invalid username or password.' });
+  }
+
+  const user = result.rows[0];
+
+  const isMatch = await compare(password, user.password_hash);
+
+  if (!isMatch) {
+    return res.status(401).json({ error: 'Invalid username or password.' });
+  }
+
+  res.status(200).json({
+      message: 'Login successful',
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email
+      }
+    });
+  } catch (err) { 
+    console.error('Login error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 })

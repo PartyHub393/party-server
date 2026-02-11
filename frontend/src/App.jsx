@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import HostScreen from './components/HostScreen'
 import JoinScreen from './components/JoinScreen'
 import './App.css'
+import LoginPage from './login/Login'
 
 function App() {
   return (
@@ -9,6 +10,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HostScreen />} />
         <Route path="/join" element={<JoinScreen />} />
+        <Route path="/login" element={<LoginPage/>}/>
       </Routes>
     </BrowserRouter>
   )
