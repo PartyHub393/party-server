@@ -1,8 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { createAccount, login as loginApi } from '../api'
+import { useAuth } from '../contexts/AuthContext'
 import './Login.css'
 
 export default function LoginPage() {
+  const navigate = useNavigate()
+  const { login: loginUser, isAuthenticated } = useAuth()
   const [isSignUp, setIsSignUp] = useState(false)
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
@@ -10,6 +14,12 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true })
+    }
+  }, [isAuthenticated, navigate])
 
   function switchMode() {
     setIsSignUp((prev) => !prev)
@@ -35,8 +45,8 @@ export default function LoginPage() {
         setUsername('')
       } else {
         const data = await loginApi({ username: username.trim(), password })
-        setSuccess('Login successful!')
-        setPassword('')
+        loginUser(data.user)
+        navigate('/', { replace: true })
       }
     } catch (err) {
       setError(err.message || (isSignUp ? 'Sign up failed' : 'Login failed'))

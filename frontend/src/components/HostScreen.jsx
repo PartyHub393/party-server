@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { createRoom as createRoomApi } from '../api'
 import { useSocket } from '../useSocket'
 import './HostScreen.css'
 
 export default function HostScreen() {
+  const navigate = useNavigate()
   const [roomCode, setRoomCode] = useState(null)
   const [players, setPlayers] = useState([])
   const [loading, setLoading] = useState(false)
@@ -110,9 +111,9 @@ export default function HostScreen() {
           <button
             type="button"
             className="host-screen__start-btn"
-            onClick={ console.log("Game started!; TODO" )}
-            disabled={players.length <= 2}
-            title={players.length <= 2 ? "Waiting for more players (3+ required)" : ""}
+            onClick={() => navigate('/games')}
+            disabled={players.length < 3}
+            title={players.length < 3 ? 'Waiting for more players (3+ required)' : ''}
           >
             Start Game
           </button>
