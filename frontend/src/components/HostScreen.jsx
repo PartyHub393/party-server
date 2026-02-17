@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { createRoom as createRoomApi } from '../api'
 import { useSocket } from '../useSocket'
+import WelcomeBanner from './WelcomeBanner'
 import './HostScreen.css'
 
 export default function HostScreen() {
@@ -59,6 +60,7 @@ export default function HostScreen() {
 
   return (
     <div className="host-screen">
+      <WelcomeBanner />
       <h1 className="host-screen__title">PartyHub</h1>
       <p className="host-screen__subtitle">Host</p>
 

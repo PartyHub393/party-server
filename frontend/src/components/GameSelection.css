@@ -1,5 +1,6 @@
 .games-page {
     min-height: 100vh;
+    position: relative;
     background: linear-gradient(
       to bottom right,
       #f3e8ff,
