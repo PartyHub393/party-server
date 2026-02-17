@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import './App.css'
 import LoginPage from './login/Login'
 import GameSelection from './components/GameSelection'
+import Trivia from './components/games/Trivia' // Trivia game component
 
 function App() {
   return (
@@ -27,6 +28,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <GameSelection />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/trivia" // Trivia game route
+            element={
+              <ProtectedRoute>
+                <Trivia />
               </ProtectedRoute>
             }
           />
