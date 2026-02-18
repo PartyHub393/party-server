@@ -7,6 +7,7 @@ import './App.css'
 import LoginPage from './login/Login'
 import GameSelection from './components/GameSelection'
 import Trivia from './components/games/Trivia'
+import ScavengerHunt from './components/games/ScavengerHunt'
 
 function App() {
   return (
@@ -36,6 +37,14 @@ function App() {
           element= {
             <ProtectedRoute>
               <Trivia />
+            </ProtectedRoute>
+          }
+          />
+
+          <Route path="/scavenger-hunt"
+          element= {
+            <ProtectedRoute>
+              <ScavengerHunt />
             </ProtectedRoute>
           }
           />
