@@ -8,6 +8,7 @@ import LoginPage from './login/Login'
 import GameSelection from './components/GameSelection'
 import Trivia from './components/games/Trivia'
 import ScavengerHunt from './components/games/ScavengerHunt'
+import ScavengerHuntGame from './components/games/ScavengerHuntGame'
 
 function App() {
   return (
@@ -45,6 +46,13 @@ function App() {
           element= {
             <ProtectedRoute>
               <ScavengerHunt />
+            </ProtectedRoute>
+          }
+          />
+          <Route path="/scavenger-hunt/start"
+          element= {
+            <ProtectedRoute>
+              <ScavengerHuntGame />
             </ProtectedRoute>
           }
           />
