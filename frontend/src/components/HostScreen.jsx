@@ -61,7 +61,7 @@ export default function HostScreen() {
   return (
     <div className="host-screen">
       <WelcomeBanner />
-      <h1 className="host-screen__title">PartyHub</h1>
+      <h1 className="host-screen__title">DiscoverCase</h1>
       <p className="host-screen__subtitle">Host</p>
 
       {!connected && roomCode && (

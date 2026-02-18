@@ -54,7 +54,7 @@ export default function JoinScreen() {
   if (joined) {
     return (
       <div className="join-screen">
-        <h1 className="join-screen__title">PartyHub</h1>
+        <h1 className="join-screen__title">DiscoverCase</h1>
         <div className="join-screen__success">
           <p className="join-screen__success-title">You're in!</p>
           <p className="join-screen__success-text">
@@ -71,7 +71,7 @@ export default function JoinScreen() {
 
   return (
     <div className="join-screen">
-      <h1 className="join-screen__title">PartyHub</h1>
+      <h1 className="join-screen__title">DiscoverCase</h1>
       <p className="join-screen__subtitle">Join a room</p>
 
       {!connected && (
