@@ -1,12 +1,7 @@
 .games-page {
     min-height: 100vh;
     position: relative;
-    background: linear-gradient(
-      to bottom right,
-      #f3e8ff,
-      #e0f2fe,
-      #fce7f3
-    );
+    background: linear-gradient(160deg, #1a0a2e 0%, #16213e 50%, #0f3460 100%);
     padding: 3rem 1.5rem;
   }
   
@@ -19,7 +14,7 @@
   .games-title {
     font-size: 2.2rem;
     font-weight: 700;
-    color: #6d28d9;
+    color: white;
     margin-bottom: 0.5rem;
   }
   

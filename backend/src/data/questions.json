@@ -1,0 +1,674 @@
+[
+  {
+    "id": 1,
+    "question": "Which two institutions federated in 1967 to form CWRU?",
+    "options": ["Case Institute of Technology & Western Reserve University", "Cleveland College & Mather College", "Adelbert College & Case School of Applied Science", "Ohio Wesleyan & Western Reserve"],
+    "answer": "Case Institute of Technology & Western Reserve University",
+    "category": "History"
+  },
+  {
+    "id": 2,
+    "question": "Western Reserve College was founded in 1826 in which Ohio city?",
+    "options": ["Cleveland", "Hudson", "Columbus", "Akron"],
+    "answer": "Hudson",
+    "category": "Foundations"
+  },
+  {
+    "id": 3,
+    "question": "Which CWRU alumnus created Gmail and coined the slogan 'Don't be evil'?",
+    "options": ["Paul Buchheit", "Donald Johanson", "Dayton Miller", "Robert W. Morse"],
+    "answer": "Paul Buchheit",
+    "category": "Alumni"
+  },
+  {
+    "id": 4,
+    "question": "The famous 1887 experiment that proved the speed of light is constant was conducted by?",
+    "options": ["Smith and Sears", "Michelson and Morley", "Case and Stone", "Miller and Beck"],
+    "answer": "Michelson and Morley",
+    "category": "Science"
+  },
+  {
+    "id": 5,
+    "question": "In 1850, Western Reserve graduated most of the first women in the U.S. to receive what?",
+    "options": ["Law Degrees", "Medical Degrees", "Engineering Degrees", "PhDs in Physics"],
+    "answer": "Medical Degrees",
+    "category": "Medicine"
+  },
+  {
+    "id": 6,
+    "question": "Who was the first American to win a Nobel Prize in science?",
+    "options": ["Claude Beck", "Dayton Miller", "Albert Michelson", "Donald Johanson"],
+    "answer": "Albert Michelson",
+    "category": "Science"
+  },
+  {
+    "id": 7,
+    "question": "What 3.2-million-year-old hominid fossil was discovered by CWRU's Donald Johanson?",
+    "options": ["Ardi", "Lucy", "Taung Child", "Java Man"],
+    "answer": "Lucy",
+    "category": "Science"
+  },
+  {
+    "id": 8,
+    "question": "The 'Hudson Relay' race commemorates what 1882 event?",
+    "options": ["The first football game", "The move from Hudson to Cleveland", "The end of the Civil War", "The founding of CIT"],
+    "answer": "The move from Hudson to Cleveland",
+    "category": "Tradition"
+  },
+  {
+    "id": 9,
+    "question": "Which medical 'first' occurred at CWRU in 1947?",
+    "options": ["First Kidney Transplant", "First Human Heart Defibrillation", "First Insulin Injection", "First X-Ray"],
+    "answer": "First Human Heart Defibrillation",
+    "category": "Medicine"
+  },
+  {
+    "id": 10,
+    "question": "Who designed the Peter B. Lewis Building?",
+    "options": ["Frank Lloyd Wright", "Frank Gehry", "Zaha Hadid", "I.M. Pei"],
+    "answer": "Frank Gehry",
+    "category": "Architecture"
+  },
+  {
+    "id": 11,
+    "question": "In 1989, CWRUNet was the first university network in the world to be?",
+    "options": ["Wireless", "Fiber-optic", "Satellite-based", "Open to the public"],
+    "answer": "Fiber-optic",
+    "category": "Tech"
+  },
+  {
+    "id": 12,
+    "question": "What was the significance of the 'Heald Commission' in 1966?",
+    "options": ["Built the library", "Proposed the CIT/WRU federation", "Ended the Vietnam protests", "Founded the medical school"],
+    "answer": "Proposed the CIT/WRU federation",
+    "category": "History"
+  },
+  {
+    "id": 13,
+    "question": "Which building is the oldest on the CWRU campus?",
+    "options": ["Adelbert Hall", "Case Main", "KSL", "Amasa Stone Chapel"],
+    "answer": "Adelbert Hall",
+    "category": "Architecture"
+  },
+  {
+    "id": 14,
+    "question": "Who provided the funding to move Western Reserve to Cleveland?",
+    "options": ["Leonard Case", "Amasa Stone", "John Rockefeller", "Andrew Carnegie"],
+    "answer": "Amasa Stone",
+    "category": "Foundations"
+  },
+  {
+    "id": 15,
+    "question": "What was 'The Race at Case' in 2004?",
+    "options": ["A marathon", "A solar car race", "The Vice-Presidential Debate", "A hackathon"],
+    "answer": "The Vice-Presidential Debate",
+    "category": "Politics"
+  },
+  {
+    "id": 16,
+    "question": "Which professor performed the first full-body X-ray on himself?",
+    "options": ["Albert Michelson", "Dayton Miller", "Claude Beck", "Edward Morley"],
+    "answer": "Dayton Miller",
+    "category": "Science"
+  },
+  {
+    "id": 17,
+    "question": "In 1931, the College for Women was renamed in honor of whose daughter?",
+    "options": ["Leonard Case", "Amasa Stone", "Charles Bingham", "Barbara Snyder"],
+    "answer": "Amasa Stone",
+    "category": "History"
+  },
+  {
+    "id": 18,
+    "question": "What was the country's first free, open-access computer communication system (1986)?",
+    "options": ["Arpanet", "Cleveland Free-Net", "CWRULink", "The Source"],
+    "answer": "Cleveland Free-Net",
+    "category": "Tech"
+  },
+  {
+    "id": 19,
+    "question": "Kelvin Smith Library (KSL) unified collections from Sears and which other library?",
+    "options": ["Mather", "Freiberger", "Adelbert", "Cleveland Public"],
+    "answer": "Freiberger",
+    "category": "Architecture"
+  },
+  {
+    "id": 20,
+    "question": "Who was the first female President of CWRU?",
+    "options": ["Flora Stone Mather", "Barbara R. Snyder", "Elizabeth Blackwell", "Frances Payne Bolton"],
+    "answer": "Barbara R. Snyder",
+    "category": "Leadership"
+  },
+  {
+    "id": 21,
+    "question": "What is being built in 2024 as the largest addition to the Case Quad?",
+    "options": ["A new dorm", "Interdisciplinary Science and Engineering Building", "A second KSL", "The Tinkham Veale expansion"],
+    "answer": "Interdisciplinary Science and Engineering Building",
+    "category": "Future"
+  },
+  {
+    "id": 22,
+    "question": "What institution did the Medical school partner with when it moved to University Circle in 1924?",
+    "options": ["The Cleveland Clinic", "University Hospitals", "MetroHealth", "The VA"],
+    "answer": "University Hospitals",
+    "category": "Medicine"
+  },
+  {
+    "id": 23,
+    "question": "In 1886, when Case Main burned down, where were classes held?",
+    "options": ["Public Square", "Western Reserve University", "A local church", "The Arcade"],
+    "answer": "Western Reserve University",
+    "category": "History"
+  },
+  {
+    "id": 24,
+    "question": "The slogan 'Don't be evil' was coined by which Spartan?",
+    "options": ["Paul Buchheit", "Craig Newmark", "Herbert Dow", "Peter Lewis"],
+    "answer": "Paul Buchheit",
+    "category": "Alumni"
+  },
+  {
+    "id": 25,
+    "question": "Which building burned down in 1991 and reopened in 1993?",
+    "options": ["Adelbert Hall", "Hitchcock Hall", "Tomlinson Hall", "Rockefeller Building"],
+    "answer": "Adelbert Hall",
+    "category": "History"
+  },
+  {
+    "id": 26,
+    "question": "What opened in 2005 as the first new student housing in over 30 years?",
+    "options": ["The Village @ 115th", "North Campus RC", "South Campus Commons", "Tyler House"],
+    "answer": "The Village @ 115th",
+    "category": "Campus Life"
+  },
+  {
+    "id": 27,
+    "question": "Which college was founded in 1880 via a secret trust?",
+    "options": ["Western Reserve College", "Case School of Applied Science", "Cleveland College", "Mather College"],
+    "answer": "Case School of Applied Science",
+    "category": "Foundations"
+  },
+  {
+    "id": 28,
+    "question": "The Health Education Campus opened in what year?",
+    "options": ["2015", "2019", "2021", "2023"],
+    "answer": "2019",
+    "category": "Modern"
+  },
+  {
+    "id": 29,
+    "question": "Who became the President of CWRU in 2021?",
+    "options": ["Barbara Snyder", "Eric W. Kaler", "Edward Hundert", "Louis Toepfer"],
+    "answer": "Eric W. Kaler",
+    "category": "Leadership"
+  },
+  {
+    "id": 30,
+    "question": "Which experiment proves the constant speed of light?",
+    "options": ["Double Slit", "Michelson-Morley", "Millikan Oil Drop", "Foucault Pendulum"],
+    "answer": "Michelson-Morley",
+    "category": "Science"
+  },
+  {
+    "id": 31,
+    "question": "Where was Western Reserve College's Medical Department founded?",
+    "options": ["Hudson", "Cleveland", "Columbus", "Elyria"],
+    "answer": "Cleveland",
+    "category": "Medicine"
+  },
+  {
+    "id": 32,
+    "question": "What happened to Case Main in 1972?",
+    "options": ["It was renovated", "It was razed (demolished)", "It became the library", "It was moved to Hudson"],
+    "answer": "It was razed (demolished)",
+    "category": "Architecture"
+  },
+  {
+    "id": 33,
+    "question": "In 1872, Western Reserve admitted its first woman as what?",
+    "options": ["Professor", "Undergraduate student", "Dean", "Janitor"],
+    "answer": "Undergraduate student",
+    "category": "History"
+  },
+  {
+    "id": 34,
+    "question": "Who was the first president of the federated CWRU?",
+    "options": ["Robert W. Morse", "Amasa Stone", "Leonard Case", "Louis Toepfer"],
+    "answer": "Robert W. Morse",
+    "category": "Leadership"
+  },
+  {
+    "id": 35,
+    "question": "Which CWRU partner school opened in the Lerner College of Medicine in 2002?",
+    "options": ["University Hospitals", "Cleveland Clinic", "MetroHealth", "The VA"],
+    "answer": "Cleveland Clinic",
+    "category": "Medicine"
+  },
+  {
+    "id": 36,
+    "question": "What was the name of the agreement that officially united CIT and WRU in 1967?",
+    "options": ["The Cleveland Pact", "The Agreement of Consolidation", "The University Circle Treaty", "The Spartan Accord"],
+    "answer": "The Agreement of Consolidation",
+    "category": "History"
+  },
+  {
+    "id": 37,
+    "question": "In 1910, the first Hudson Relay was run to celebrate the move of which campus?",
+    "options": ["Case Institute", "Western Reserve College", "Cleveland College", "Mather College"],
+    "answer": "Western Reserve College",
+    "category": "Tradition"
+  },
+  {
+    "id": 38,
+    "question": "Which building served as the main administration hub for CIT before being demolished in 1972?",
+    "options": ["Sears Building", "Case Main", "Wickenden", "Yost Hall"],
+    "answer": "Case Main",
+    "category": "Architecture"
+  },
+  {
+    "id": 39,
+    "question": "Flora Stone Mather was the daughter of which major CWRU benefactor?",
+    "options": ["Leonard Case", "Amasa Stone", "Kelvin Smith", "George Dively"],
+    "answer": "Amasa Stone",
+    "category": "Foundations"
+  },
+  {
+    "id": 40,
+    "question": "In 1925, where was Cleveland College originally located before moving to University Circle?",
+    "options": ["Downtown Cleveland", "Hudson", "Shaker Heights", "Lakewood"],
+    "answer": "Downtown Cleveland",
+    "category": "History"
+  },
+  {
+    "id": 41,
+    "question": "Which CWRU library was replaced by the opening of Kelvin Smith Library in 1996?",
+    "options": ["Sears Library", "Freiberger Library", "Both Sears and Freiberger", "Gund Library"],
+    "answer": "Both Sears and Freiberger",
+    "category": "Architecture"
+  },
+  {
+    "id": 42,
+    "question": "What significant event occurred on campus in both 2004 and 2020?",
+    "options": ["A major fire", "A Presidential or Vice-Presidential debate", "The Olympics", "The Hudson Relay was cancelled"],
+    "answer": "A Presidential or Vice-Presidential debate",
+    "category": "Modern"
+  },
+  {
+    "id": 43,
+    "question": "Who was the second president of the federated CWRU, serving from 1971 to 1980?",
+    "options": ["Louis A. Toepfer", "Robert W. Morse", "Barbara Snyder", "Eric Kaler"],
+    "answer": "Louis A. Toepfer",
+    "category": "Leadership"
+  },
+  {
+    "id": 44,
+    "question": "The 'Preparatory School' was a part of which original institution in 1826?",
+    "options": ["Case School", "Western Reserve College", "Mather College", "Adelbert College"],
+    "answer": "Western Reserve College",
+    "category": "Foundations"
+  },
+  {
+    "id": 45,
+    "question": "In 1885, where did the Case School of Applied Science move from?",
+    "options": ["Hudson", "Downtown Cleveland", "Chicago", "University Heights"],
+    "answer": "Downtown Cleveland",
+    "category": "History"
+  },
+  {
+    "id": 46,
+    "question": "Which building is named after the man who provided a 'secret trust' in 1880?",
+    "options": ["Stone Chapel", "Case Quad", "Adelbert Hall", "Smith Building"],
+    "answer": "Case Quad",
+    "category": "Foundations"
+  },
+  {
+    "id": 48,
+    "question": "What year did Case Applied School of Science officially become 'Case Institute of Technology'?",
+    "options": ["1880", "1947", "1967", "1991"],
+    "answer": "1947",
+    "category": "History"
+  },
+  {
+    "id": 49,
+    "question": "Which major campus facility opened in 1988 as part of a $325 million master plan?",
+    "options": ["Veale Center", "Tinkham Veale University Center", "The Village", "Wyant Center"],
+    "answer": "Veale Center",
+    "category": "Architecture"
+  },
+  {
+    "id": 50,
+    "question": "The Health Education Campus (2019) is a joint project between CWRU and which hospital?",
+    "options": ["University Hospitals", "The Cleveland Clinic", "MetroHealth", "St. Vincent"],
+    "answer": "The Cleveland Clinic",
+    "category": "Medicine"
+  },
+  {
+    "id": 51,
+    "question": "In the 1850s, WRU's Medical Department was unique for graduating women when they were barred from where?",
+    "options": ["Regular medical schools", "Teaching positions", "Hospitals", "The city of Cleveland"],
+    "answer": "Regular medical schools",
+    "category": "Medicine"
+  },
+  {
+    "id": 52,
+    "question": "Which building burns in 1991, leading to a massive restoration project?",
+    "options": ["KSL", "Adelbert Hall", "Amasa Stone Chapel", "The Power Plant"],
+    "answer": "Adelbert Hall",
+    "category": "History"
+  },
+  {
+    "id": 53,
+    "question": "The Case School of Applied Science was established via a trust from whom?",
+    "options": ["Amasa Stone", "Leonard Case Jr.", "John Hay", "Charles Brush"],
+    "answer": "Leonard Case Jr.",
+    "category": "Foundations"
+  },
+  {
+    "id": 54,
+    "question": "Which college was renamed 'Flora Stone Mather College' in 1931?",
+    "options": ["Adelbert College", "The College for Women", "Cleveland College", "Case Institute"],
+    "answer": "The College for Women",
+    "category": "History"
+  },
+  {
+    "id": 55,
+    "question": "In what year was the first full-body X-ray performed at CWRU?",
+    "options": ["1887", "1896", "1910", "1947"],
+    "answer": "1896",
+    "category": "Science"
+  },
+  {
+    "id": 56,
+    "question": "Who was the physicist that won the first American Nobel Prize in science?",
+    "options": ["Edward Morley", "Albert Michelson", "Dayton Miller", "Claude Beck"],
+    "answer": "Albert Michelson",
+    "category": "Science"
+  },
+  {
+    "id": 57,
+    "question": "What was the 'Cleveland Free-Net' created for in 1986?",
+    "options": ["Free medical care", "Computer communication", "Free tuition", "Public transport"],
+    "answer": "Computer communication",
+    "category": "Tech"
+  },
+  {
+    "id": 58,
+    "question": "The 1967 federation united which two primary institutions?",
+    "options": ["CIT and WRU", "CSU and WRU", "The Clinic and CIT", "CWRU and JCU"],
+    "answer": "CIT and WRU",
+    "category": "History"
+  },
+  {
+    "id": 59,
+    "question": "Where is the new Interdisciplinary Science and Engineering building being built (2024)?",
+    "options": ["North Campus", "South Campus", "The Case Quad", "Mather Quad"],
+    "answer": "The Case Quad",
+    "category": "Modern"
+  },
+  {
+    "id": 61,
+    "question": "The 'Village at 115th' was notable for being the first new student housing in how many years?",
+    "options": ["10", "20", "30", "50"],
+    "answer": "30",
+    "category": "Campus Life"
+  },
+  {
+    "id": 62,
+    "question": "In 1843, the Medical Department was founded in which city?",
+    "options": ["Hudson", "Cleveland", "Akron", "Cincinnati"],
+    "answer": "Cleveland",
+    "category": "Medicine"
+  },
+  {
+    "id": 63,
+    "question": "Who provided the funding for the Peter B. Lewis building?",
+    "options": ["Peter B. Lewis", "Amasa Stone", "Kelvin Smith", "Leonard Case"],
+    "answer": "Peter B. Lewis",
+    "category": "Architecture"
+  },
+  {
+    "id": 64,
+    "question": "Before 1967, Case and Western Reserve were located right next to each other in?",
+    "options": ["University Circle", "Public Square", "The Flats", "Ohio City"],
+    "answer": "University Circle",
+    "category": "History"
+  },
+  {
+    "id": 65,
+    "question": "Which president was inaugurated in 1968?",
+    "options": ["Louis Toepfer", "Robert W. Morse", "Barbara Snyder", "Eric Kaler"],
+    "answer": "Robert W. Morse",
+    "category": "Leadership"
+  },
+  {
+    "id": 66,
+    "question": "What medical breakthrough did Claude Beck achieve in 1947?",
+    "options": ["Defibrillation", "Heart transplant", "Brain surgery", "MRI"],
+    "answer": "Defibrillation",
+    "category": "Medicine"
+  },
+  {
+    "id": 67,
+    "question": "What college was formed in 1888 for female students?",
+    "options": ["Adelbert College", "The College for Women", "Case School", "Cleveland College"],
+    "answer": "The College for Women",
+    "category": "History"
+  },
+  {
+    "id": 68,
+    "question": "The first X-ray in the U.S. was performed by Dayton Miller on whom?",
+    "options": ["His wife", "His dog", "Himself", "Leonard Case"],
+    "answer": "Himself",
+    "category": "Science"
+  },
+  {
+    "id": 69,
+    "question": "In 1882, funding for Western Reserve's move came from which industry?",
+    "options": ["Steel", "Oil", "Railroad/Industrial", "Banking"],
+    "answer": "Railroad/Industrial",
+    "category": "History"
+  },
+  {
+    "id": 70,
+    "question": "Which library was known as the 'Electronic Library' when it opened in 1996?",
+    "options": ["Sears", "KSL", "Mather", "Adelbert"],
+    "answer": "KSL",
+    "category": "Tech"
+  },
+  {
+    "id": 71,
+    "question": "Which CWRU professor is credited with changing our understanding of human evolution by discovering 'Lucy'?",
+    "options": ["Albert Michelson", "Donald Johanson", "Claude Beck", "Dayton Miller"],
+    "answer": "Donald Johanson",
+    "category": "Science"
+  },
+  {
+    "id": 72,
+    "question": "The first campus master plan in 1988 led to the completion of which athletic center?",
+    "options": ["Wyant", "Veale", "DiSanto", "Adelbert Gym"],
+    "answer": "Veale",
+    "category": "Architecture"
+  },
+  {
+    "id": 73,
+    "question": "What was the initial name of the university network before it was renamed CWRUNet?",
+    "options": ["SpartanNet", "CaseLink", "Cleveland Free-Net", "The Source"],
+    "answer": "Cleveland Free-Net",
+    "category": "Tech"
+  },
+  {
+    "id": 74,
+    "question": "In 1971, which three colleges were consolidated under President Louis A. Toepfer?",
+    "options": ["Adelbert, Mather, and Cleveland", "Case, WRU, and CSU", "Sears, Smith, and Kent", "UH, Clinic, and Metro"],
+    "answer": "Adelbert, Mather, and Cleveland",
+    "category": "History"
+  },
+  {
+    "id": 75,
+    "question": "What year did the Peter B. Lewis building, designed by Frank Gehry, open?",
+    "options": ["1996", "2002", "2004", "2010"],
+    "answer": "2002",
+    "category": "Modern"
+  },
+  {
+    "id": 76,
+    "question": "The 'Elephant Stairs' are a famous landmark on which part of campus?",
+    "options": ["North Campus", "The Case Quad", "South Campus (Mather)", "The Village"],
+    "answer": "South Campus (Mather)",
+    "category": "Campus Lore"
+  },
+  {
+    "id": 77,
+    "question": "Who was the 'industrialist' that funded the move from Hudson to Cleveland?",
+    "options": ["John D. Rockefeller", "Andrew Carnegie", "Amasa Stone", "Henry Ford"],
+    "answer": "Amasa Stone",
+    "category": "Foundations"
+  },
+  {
+    "id": 78,
+    "question": "In 1826, Western Reserve College was often referred to by what nickname?",
+    "options": ["The Yale of the West", "The Harvard of the Hills", "Ohio’s First", "The Hudson Academy"],
+    "answer": "The Yale of the West",
+    "category": "History"
+  },
+  {
+    "id": 79,
+    "question": "Which CWRU building reopened in 1993 following a devastating fire?",
+    "options": ["Case Main", "Adelbert Hall", "Tomlinson Hall", "Rockefeller"],
+    "answer": "Adelbert Hall",
+    "category": "Architecture"
+  },
+  {
+    "id": 80,
+    "question": "Paul Buchheit, the creator of Gmail, graduated from CWRU in what year?",
+    "options": ["1984", "1991", "1998", "2004"],
+    "answer": "1998",
+    "category": "Alumni"
+  },
+  {
+    "id": 81,
+    "question": "Which school currently uses the Peter B. Lewis building?",
+    "options": ["School of Law", "Weatherhead School of Management", "School of Medicine", "Case School of Engineering"],
+    "answer": "Weatherhead School of Management",
+    "category": "Campus Life"
+  },
+  {
+    "id": 82,
+    "question": "The Health Education Campus is home to the nursing, dental, and which other school?",
+    "options": ["Engineering", "Medicine", "Social Work", "Law"],
+    "answer": "Medicine",
+    "category": "Modern"
+  },
+  {
+    "id": 84,
+    "question": "In 1850s Cleveland, WRU medical graduates were pioneers for what demographic?",
+    "options": ["Veterans", "Women", "International students", "Engineers"],
+    "answer": "Women",
+    "category": "Medicine"
+  },
+  {
+    "id": 85,
+    "question": "What is the primary material used on the exterior of the Peter B. Lewis building?",
+    "options": ["Brick", "Stainless Steel", "Glass", "Limestone"],
+    "answer": "Stainless Steel",
+    "category": "Architecture"
+  },
+  {
+    "id": 86,
+    "question": "The 1887 Michelson-Morley experiment took place in a basement at which hall?",
+    "options": ["Adelbert Hall", "Case Main Building", "Strosacker", "Glennan"],
+    "answer": "Adelbert Hall",
+    "category": "Science"
+  },
+  {
+    "id": 87,
+    "question": "Which US Vice President debated at CWRU during 'The Race at Case' in 2004?",
+    "options": ["Joe Biden", "Dick Cheney", "Al Gore", "John Edwards"],
+    "answer": "Dick Cheney",
+    "category": "Politics"
+  },
+  {
+    "id": 88,
+    "question": "What was the destination of the very first Hudson Relay in 1910?",
+    "options": ["Public Square", "The new Cleveland campus", "University Hospital", "Lake Erie"],
+    "answer": "The new Cleveland campus",
+    "category": "Tradition"
+  },
+  {
+    "id": 89,
+    "question": "Which street borders 'The Village @ 115th'?",
+    "options": ["Euclid Ave", "East 115th Street", "Mayfield Road", "Bellflower Road"],
+    "answer": "East 115th Street",
+    "category": "Geography"
+  },
+  {
+    "id": 91,
+    "question": "The university's mascot is a Spartan, but what was the CIT mascot before 1967?",
+    "options": ["The Rough Riders", "The Engineers", "The Scientists", "The Owls"],
+    "answer": "The Rough Riders",
+    "category": "Tradition"
+  },
+  {
+    "id": 92,
+    "question": "Which building serves as the main undergraduate library today?",
+    "options": ["Cleveland Public Library", "Kelvin Smith Library", "Sears Library", "Adelbert Library"],
+    "answer": "Kelvin Smith Library",
+    "category": "Campus Life"
+  },
+  {
+    "id": 93,
+    "question": "Who is the current President of Case Western Reserve University (as of 2024)?",
+    "options": ["Barbara Snyder", "Eric W. Kaler", "Edward Hundert", "Robert Morse"],
+    "answer": "Eric W. Kaler",
+    "category": "Leadership"
+  },
+  {
+    "id": 94,
+    "question": "How many miles is the Hudson Relay?",
+    "options": ["10 miles", "20 miles", "26 miles", "50 miles"],
+    "answer": "26 miles",
+    "category": "Tradition"
+  },
+  {
+    "id": 95,
+    "question": "What did Dayton Miller use to perform the first full-body X-ray?",
+    "options": ["His own body", "A cadaver", "A wooden mannequin", "A student volunteer"],
+    "answer": "His own body",
+    "category": "Science"
+  },
+  {
+    "id": 96,
+    "question": "Which campus quadrant is home to the Case School of Engineering?",
+    "options": ["North Quad", "South Quad", "Case Quad", "Mather Quad"],
+    "answer": "Case Quad",
+    "category": "Geography"
+  },
+  {
+    "id": 97,
+    "question": "In 1986, the Cleveland Free-Net became the world's first what?",
+    "options": ["Email server", "Open-access computer communication system", "Search engine", "Online library"],
+    "answer": "Open-access computer communication system",
+    "category": "Tech"
+  },
+  {
+    "id": 98,
+    "question": "Which of these was NOT part of the 1988 campus master plan?",
+    "options": ["Veale Center", "KSL", "The Tinkham Veale University Center", "Mandel School"],
+    "answer": "The Tinkham Veale University Center",
+    "category": "History"
+  },
+  {
+    "id": 99,
+    "question": "What is the primary focus of the new ISEB building on the Quad?",
+    "options": ["Athletics", "Interdisciplinary Science and Engineering", "Music and Arts", "Law and Policy"],
+    "answer": "Interdisciplinary Science and Engineering",
+    "category": "Modern"
+  },
+  {
+    "id": 100,
+    "question": "What year marks the bicentennial (200th anniversary) of the university's original founding?",
+    "options": ["2024", "2026", "2067", "2082"],
+    "answer": "2026",
+    "category": "History"
+  }
+]

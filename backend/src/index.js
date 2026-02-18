@@ -21,6 +21,8 @@ const io = new Server(httpServer, {
   cors: { origin: true },
 });
 
+const questions = require('./data/questions.json');
+
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
@@ -114,6 +116,19 @@ app.post('/api/login', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 })
+
+app.get('/api/trivia/random', (req, res) => {
+  const seenIds = req.query.seen ? req.query.seen.split(',').map(Number) : [];
+
+  const availableQuestions = questions.filter(q => !seenIds.includes(q.id));
+
+  if (availableQuestions.length === 0) {
+    return res.status(404).json({ message: "No more new questions!" });
+  }
+
+  const randomIndex = Math.floor(Math.random() * availableQuestions.length);
+  res.json(availableQuestions[randomIndex]);
+});
 
 io.on('connection', (socket) => {
   socket.on('host_room', (roomCode) => {
