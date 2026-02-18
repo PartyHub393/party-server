@@ -57,7 +57,7 @@ export default function LoginPage() {
 
   return (
     <div className="login-screen">
-      <h1 className="login-screen__title">DiscoverCase</h1>
+      <h1 className="login-screen__title">PartyHub</h1>
       <p className="login-screen__subtitle">
         {isSignUp ? 'Create an account' : 'Log in'}
       </p>
