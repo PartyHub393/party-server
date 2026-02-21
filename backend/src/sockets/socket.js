@@ -1,0 +1,62 @@
+const {
+  getRoom,
+  setHost,
+  addPlayer,
+  removePlayer,
+  getPlayers,
+  removeRoom,
+} = require('../rooms');
+
+module.exports = function(io) {
+  io.on('connection', (socket) => {
+    socket.on('host_room', (roomCode) => {
+      const code = (roomCode || '').toUpperCase();
+      const room = getRoom(code);
+      if (!room) {
+        socket.emit('host_error', { message: 'Room not found' });
+        return;
+      }
+      socket.join(code);
+      setHost(code, socket.id);
+      socket.emit('host_joined', { roomCode: code, players: getPlayers(code) });
+    });
+
+    socket.on('join_room', ({ roomCode, username }) => {
+      const code = (roomCode || '').toUpperCase();
+      const room = getRoom(code);
+      if (!room) {
+        socket.emit('join_error', { message: 'Room not found. Check the code.' });
+        return;
+      }
+      const players = addPlayer(code, socket.id, username);
+      if (players === null) {
+        socket.emit('join_error', { message: 'Could not join room.' });
+        return;
+      }
+      socket.join(code);
+      socket.emit('join_success', { roomCode: code, players });
+      socket.to(code).emit('player_joined', { players });
+    });
+
+    socket.on('disconnect', () => {
+      const roomsJoined = Array.from(socket.rooms).filter((r) => r !== socket.id);
+      roomsJoined.forEach((code) => {
+        const players = removePlayer(code, socket.id);
+        if (players !== null) {
+          io.to(code).emit('player_joined', { players });
+        }
+      });
+    });
+
+    socket.on('host_closed', () => {
+      const roomsJoined = Array.from(socket.rooms).filter((r) => r !== socket.id);
+      roomsJoined.forEach((code) => {
+        io.to(code).emit('room_closed', { 
+          message: 'The host has ended the session.' 
+        });
+        io.in(code).socketsLeave(code);
+        removeRoom(code);
+      });
+    });
+  });
+};
