@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './Trivia.css'
 import {fetchQuestion} from '../../api'
+import { useSocket } from '../../useSocket'
 
 export default function Trivia() {
     const [gameState, setGameState] = useState('selection');
