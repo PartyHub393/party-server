@@ -101,4 +101,8 @@ router.get('/api/trivia/random', (req, res) => {
   res.json(availableQuestions[randomIndex]);
 });
 
+router.get('/', (req, res) => {
+  res.json({ status: 'Alive' });
+});
+
 module.exports = router;

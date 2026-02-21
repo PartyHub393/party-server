@@ -58,5 +58,23 @@ module.exports = function(io) {
         removeRoom(code);
       });
     });
+
+    socket.on('broadcast_question', ({ roomCode, question, options }) => {  
+      const code = (roomCode || '').toUpperCase();
+      const room = getRoom(code);
+
+      if (!room) {
+        socket.emit('host_error', { message: 'Room not found' });
+        return;
+      }
+
+      if(room.hostId !== socket.id) {
+        socket.emit('host_error', { message: 'Only the host can broadcast questions.' });
+        return;
+      }
+
+      socket.to(code).emit('new_question', { question, options });
+
+    });
   });
 };

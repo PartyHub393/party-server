@@ -51,3 +51,20 @@ export async function login({ username, password }) {
   if (!res.ok) throw new Error(data?.error || 'Login failed')
   return data
 }
+
+
+  export async function fetchQuestion(seen = []) {
+    let res
+    try {
+      res = await fetch(`${API_BASE}/api/trivia/random?seen=${seen.join(',')}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      })
+    } catch (err) {
+      console.log('Fetch error:', err)
+      throw new Error('Cannot reach server. Is the backend running on port 3000?')
+    }
+    const data = await parseJson(res)
+    if (!res.ok) throw new Error(data?.error || 'Failed to fetch question')
+    return data
+  }
