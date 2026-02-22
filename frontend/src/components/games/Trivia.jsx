@@ -9,7 +9,7 @@ export default function Trivia() {
     const [questionData, setQuestionData] = useState(null);
     const [currentQuestion, setCurrentQuestion] = useState(0);
 
-    const { socket, connected } = useSocket()
+    const { socket, roomCode } = useSocket()
 
     var prev = 0;
 
@@ -27,7 +27,7 @@ export default function Trivia() {
             setQuestionData(data);
             setCurrentQuestion(prev => prev + 1);
 
-            socket.emit('broadcast_question', { roomCode: socket.roomCode, question: data.question, options: data.options});
+            socket.emit('broadcast_question', { roomCode: roomCode, question: data.question, options: data.options});
         });
     }
 

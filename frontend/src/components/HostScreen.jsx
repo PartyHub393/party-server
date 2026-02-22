@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { createRoom as createRoomApi } from '../api'
 import { useSocket } from '../useSocket'
@@ -7,11 +7,11 @@ import './HostScreen.css'
 
 export default function HostScreen() {
   const navigate = useNavigate()
-  const [roomCode, setRoomCode] = useState(null)
   const [players, setPlayers] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const { socket, connected } = useSocket()
+  const { socket, connected, roomCode, setRoomCode} = useSocket()
+  const isStartingGame = useRef(false)
 
   useEffect(() => {
     if (!socket || !roomCode) return
@@ -19,7 +19,14 @@ export default function HostScreen() {
     socket.once('host_joined', ({ players: initialPlayers }) => {
       setPlayers(initialPlayers || [])
     })
-    socket.on('host_error', ({ message }) => setError(message))
+    socket.on('host_error', ({ message }) => {
+      if(message == 'Room not found') {
+        handleNewCode()
+      } else {
+        setError(message || 'Failed to host room')
+      }
+    })
+
     socket.on('player_joined', ({ players: nextPlayers }) => {
       setPlayers(nextPlayers || [])
     })
@@ -33,8 +40,11 @@ export default function HostScreen() {
 
     window.addEventListener('beforeunload', handleTabClose)
     return () => {
-      // In case the user goes to another page/tab
-      socket.emit('host_closed')
+      // Close the socket/connection only if the host left the page
+      if (!isStartingGame.current) {
+        socket.emit('host_closed')
+      }
+
       socket.off('host_joined').off('host_error').off('player_joined')
     }
   }, [socket, roomCode])
@@ -53,10 +63,22 @@ export default function HostScreen() {
   }
 
   function handleNewCode() {
+    if (socket && roomCode) {
+      socket.emit('host_closed');
+    }
+
     setRoomCode(null)
+
     setPlayers([])
     setError(null)
   }
+
+  const handleStartGame = () => {
+    isStartingGame.current = true
+    navigate('/games')
+  }
+
+  console.log(connected, roomCode);
 
   return (
     <div className="host-screen">
@@ -113,7 +135,7 @@ export default function HostScreen() {
           <button
             type="button"
             className="host-screen__start-btn"
-            onClick={() => navigate('/games')}
+            onClick={handleStartGame}
             disabled={players.length < 3}
             title={players.length < 3 ? 'Waiting for more players (3+ required)' : ''}
           >

@@ -4,12 +4,12 @@ import { useSocket } from '../useSocket'
 import './JoinScreen.css'
 
 export default function JoinScreen() {
-  const [roomCode, setRoomCode] = useState('')
   const [username, setUsername] = useState('')
   const [joined, setJoined] = useState(false)
   const [error, setError] = useState(null)
   const [joining, setJoining] = useState(false)
-  const { socket, connected } = useSocket()
+  const { socket, connected, setRoomCode } = useSocket()
+  const [inputCode, setInputCode] = useState('')
 
   useEffect(() => {
     if (!socket) return
@@ -17,6 +17,7 @@ export default function JoinScreen() {
       setJoined(true)
       setJoining(false)
       setError(null)
+      setRoomCode(inputCode)
     })
     socket.on('join_error', ({ message }) => {
       setError(message || 'Could not join room')
@@ -37,7 +38,7 @@ export default function JoinScreen() {
   function handleSubmit(e) {
     e.preventDefault()
     setError(null)
-    const code = roomCode.trim().toUpperCase()
+    const code = inputCode.trim().toUpperCase()
     const name = username.trim() || 'Player'
     if (!code || code.length !== 6) {
       setError('Enter a 6-letter room code')
@@ -91,8 +92,8 @@ export default function JoinScreen() {
           <input
             type="text"
             className="join-screen__input"
-            value={roomCode}
-            onChange={(e) => setRoomCode(e.target.value.toUpperCase().slice(0, 6))}
+            value={inputCode}
+            onChange={(e) => setInputCode(e.target.value.toUpperCase().slice(0, 6))}
             placeholder="ABCDEF"
             maxLength={6}
             autoComplete="off"
