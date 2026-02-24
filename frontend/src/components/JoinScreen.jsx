@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useSocket } from '../useSocket'
 import './JoinScreen.css'
-
 export default function JoinScreen() {
   const [username, setUsername] = useState('')
   const [joined, setJoined] = useState(false)
@@ -10,7 +9,7 @@ export default function JoinScreen() {
   const [joining, setJoining] = useState(false)
   const { socket, connected, setRoomCode } = useSocket()
   const [inputCode, setInputCode] = useState('')
-
+  const navigate = useNavigate()
   useEffect(() => {
     if (!socket) return
     socket.on('join_success', () => {
@@ -28,6 +27,18 @@ export default function JoinScreen() {
       setJoined(false)
       setJoining(false)
     })
+    socket.on('game_started', ({ roomCode, gameType } = {}) => {
+      const code = (roomCode || '').toUpperCase();
+      
+      if (!code) return;
+      console.log(gameType);
+      if(gameType === "trivia"){
+        navigate(`/play-trivia`)
+      } else if (gameType === "scavenger"){
+        navigate('/scavengerplay/')
+      }
+    })
+
     return () => {
       socket.off('join_success')
       socket.off('join_error')  

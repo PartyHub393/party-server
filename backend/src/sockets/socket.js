@@ -58,7 +58,27 @@ module.exports = function(io) {
         removeRoom(code);
       });
     });
+    socket.on('host_started', ({roomCode,gameType}) => {
+      const code = (roomCode || '').toUpperCase();
+      const room = getRoom(code);
+      const game = (gameType || '').toLowerCase();
+      if (!room) {
+        socket.emit('host_error', {message: 'Room not found'});
+        return;
+      }
+      if (room.hostId !== socket.id) {
+        socket.emit('host_error', {message: 'Only the host can start the game.'});
+        return;
+      }
+  
+      if (!['trivia', 'scavenger'].includes(game)) {
+        socket.emit('host_error', {message: 'Invalid game type.'});
+        return;
+      }
 
+      socket.to(code).emit('game_started',{roomCode: code, gameType: game}); 
+
+    }); 
     socket.on('broadcast_question', ({ roomCode, question, options }) => {  
       const code = (roomCode || '').toUpperCase();
       const room = getRoom(code);
@@ -75,6 +95,16 @@ module.exports = function(io) {
 
       socket.to(code).emit('new_question', { question, options });
 
+    });
+    socket.on('trivia_answer',({roomCode,username,answerIndex,qid}) => {
+      const code = (roomCode || '').toUpperCase();
+      const room = getRoom(code);
+
+      if (!room) {
+        socket.emit('trivia_feedback', { message: 'Room not found' });
+        return;
+      }
+      socket.to(code).emit('trivia_feedback',{message: `${username} answered!`});
     });
   });
 };

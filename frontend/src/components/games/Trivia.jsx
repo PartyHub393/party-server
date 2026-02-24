@@ -11,23 +11,22 @@ export default function Trivia() {
 
     const { socket, roomCode } = useSocket()
 
-    var prev = 0;
-
     const handleStartGame = () => {
         console.log("Starting game...");
         fetchQuestion().then(data => {
             setQuestionData(data);
-            setCurrentQuestion(prev);
+            setCurrentQuestion(0);
+            socket.emit('broadcast_question', { roomCode: roomCode, question: data.question, options: data.options });
         });
         setGameState('playing');
+        socket.emit('host_started', { roomCode: roomCode, gameType: "trivia" });
     }
 
     const handleNextQuestion = () => {
         fetchQuestion(questionData.seen).then(data => {
             setQuestionData(data);
             setCurrentQuestion(prev => prev + 1);
-
-            socket.emit('broadcast_question', { roomCode: roomCode, question: data.question, options: data.options});
+            socket.emit('broadcast_question', { roomCode: roomCode, question: data.question, options: data.options });
         });
     }
 

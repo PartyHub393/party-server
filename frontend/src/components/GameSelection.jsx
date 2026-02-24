@@ -63,6 +63,7 @@ export default function GameSelection() {
 
               <Link to="/trivia" className="game-link orange-link">
                 Start Quiz →
+
               </Link>
             </div>
           </div>

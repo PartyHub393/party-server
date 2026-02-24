@@ -9,7 +9,7 @@ import GameSelection from './components/GameSelection'
 import Trivia from './components/games/Trivia'
 import ScavengerHunt from './components/games/ScavengerHunt'
 import ScavengerHuntGame from './components/games/ScavengerHuntGame'
-
+import PlayTrivia from './components/games/PlayTrivia'
 function App() {
   return (
     <AuthProvider>
@@ -56,8 +56,14 @@ function App() {
             </ProtectedRoute>
           }
           />
-          
+          <Route path ="/play-trivia"
+          element = {
+            
+              <PlayTrivia/>
+          }
+          />
         </Routes>
+        
       </BrowserRouter>
     </AuthProvider>
   )
