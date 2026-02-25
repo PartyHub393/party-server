@@ -8,12 +8,12 @@ export function SocketProvider({ children }) {
   const [connected, setConnected] = useState(socketInstance.connected);
 
   const [roomCode, _setRoomCode] = useState(() => {
-    return localStorage.getItem('socket_room_code') || null;
+    return sessionStorage.getItem('socket_room_code') || null;
   });
 
   const setRoomCode = (code) => {
-    if (code) localStorage.setItem('socket_room_code', code);
-    else localStorage.removeItem('socket_room_code');
+    if (code) sessionStorage.setItem('socket_room_code', code);
+    else sessionStorage.removeItem('socket_room_code');
     _setRoomCode(code);
   };
 

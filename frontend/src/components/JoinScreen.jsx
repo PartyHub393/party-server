@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useSocket } from '../useSocket'
 import './JoinScreen.css'
@@ -10,13 +10,20 @@ export default function JoinScreen() {
   const { socket, connected, setRoomCode } = useSocket()
   const [inputCode, setInputCode] = useState('')
   const navigate = useNavigate()
+
+  const latestCodeRef = useRef(inputCode)
+
+  useEffect(() => {
+    latestCodeRef.current = inputCode
+  }, [inputCode])
+
   useEffect(() => {
     if (!socket) return
     socket.on('join_success', () => {
       setJoined(true)
       setJoining(false)
       setError(null)
-      setRoomCode(inputCode)
+      setRoomCode(latestCodeRef.current)
     })
     socket.on('join_error', ({ message }) => {
       setError(message || 'Could not join room')
@@ -104,7 +111,9 @@ export default function JoinScreen() {
             type="text"
             className="join-screen__input"
             value={inputCode}
-            onChange={(e) => setInputCode(e.target.value.toUpperCase().slice(0, 6))}
+            onChange={(e) =>
+                setInputCode(e.target.value.toUpperCase().slice(0, 6))
+              }
             placeholder="ABCDEF"
             maxLength={6}
             autoComplete="off"
