@@ -40,7 +40,7 @@ export default function PlayTrivia() {
   function submitAnswer(optionIndex) {
     if (!socket || !connected || !question) return
     setSelected(optionIndex)
-    socket.emit('trivia_answer', {
+    socket.emit('player_trivia_answer', {
       roomCode: roomCode,
       username,
       answerIndex: optionIndex,

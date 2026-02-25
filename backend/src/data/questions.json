@@ -455,13 +455,6 @@
     "category": "History"
   },
   {
-    "id": 68,
-    "question": "The first X-ray in the U.S. was performed by Dayton Miller on whom?",
-    "options": ["His wife", "His dog", "Himself", "Leonard Case"],
-    "answer": "Himself",
-    "category": "Science"
-  },
-  {
     "id": 69,
     "question": "In 1882, funding for Western Reserve's move came from which industry?",
     "options": ["Steel", "Oil", "Railroad/Industrial", "Banking"],
@@ -628,13 +621,6 @@
     "options": ["10 miles", "20 miles", "26 miles", "50 miles"],
     "answer": "26 miles",
     "category": "Tradition"
-  },
-  {
-    "id": 95,
-    "question": "What did Dayton Miller use to perform the first full-body X-ray?",
-    "options": ["His own body", "A cadaver", "A wooden mannequin", "A student volunteer"],
-    "answer": "His own body",
-    "category": "Science"
   },
   {
     "id": 96,

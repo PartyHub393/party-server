@@ -87,7 +87,7 @@
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.75rem;
   font-size: 1.25rem;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.3s ease-in;
 }
 
 .option-letter {
@@ -118,4 +118,26 @@
   box-shadow: 0 4px 20px rgba(255, 179, 0, 0.4);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   width:100%;
+}
+
+.question-button:disabled {
+  background: linear-gradient(135deg, #acac7f 0%, #3b3a36 100%);
+}
+
+.game-stats-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;   
+  gap: 0.5rem;        
+  padding: 1rem 2rem; 
+  font-size: 1.5rem; 
+  font-weight: bold; 
+}
+
+.projected-option--correct {
+    background-color: #4ade80; /* A nice bright green */
+    color: white;
+    border-color: #22c55e;
+    transform: scale(1.05); /* Pops it out slightly */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }

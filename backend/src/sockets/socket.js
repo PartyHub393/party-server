@@ -96,15 +96,29 @@ module.exports = function(io) {
       socket.to(code).emit('new_question', { question, options });
 
     });
-    socket.on('trivia_answer',({roomCode,username,answerIndex,qid}) => {
+    socket.on('player_trivia_answer',({roomCode,username,answerIndex,qid}) => {
+      const code = (roomCode || '').toUpperCase();
+      const room = getRoom(code);
+
+      if (!room || !room.players.find(p => p.id === socket.id)) {
+        socket.emit('player_answered', { message: 'Room not found or not in room' });
+        return;
+      }
+      socket.to(code).emit('player_answered',{username,answerIndex,qid});
+    });
+
+    socket.on('get_player_count',({roomCode}, callback) => {
       const code = (roomCode || '').toUpperCase();
       const room = getRoom(code);
 
       if (!room) {
-        socket.emit('trivia_feedback', { message: 'Room not found' });
+        socket.emit('player_count_error', { message: 'Room not found' });
         return;
       }
-      socket.to(code).emit('trivia_feedback',{message: `${username} answered!`});
+
+      callback({ count: room.players.length });
+      return;
+      
     });
   });
 };
