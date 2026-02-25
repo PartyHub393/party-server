@@ -44,11 +44,11 @@
   }
   
   .scavenger {
-    background: linear-gradient(135deg, #9333ea, #2563eb);
+    background: linear-gradient(135deg, #6383ff);
   }
   
   .trivia {
-    background: linear-gradient(135deg, #f97316, #ec4899);
+    background: linear-gradient(135deg, #c560f0);
   }
   
   .game-card__header h2 {
@@ -88,22 +88,22 @@
     color: #4b5563;
   }
   
-  .game-features.purple li::before {
+  .game-features.blue li::before {
     content: "";
     width: 8px;
     height: 8px;
-    background: #9333ea;
+    background: #6383ff;
     border-radius: 50%;
     position: absolute;
     left: 0;
     top: 7px;
   }
   
-  .game-features.orange li::before {
+  .game-features.purple li::before {
     content: "";
     width: 8px;
     height: 8px;
-    background: #f97316;
+    background: #c560f0;
     border-radius: 50%;
     position: absolute;
     left: 0;
@@ -117,12 +117,12 @@
     transition: opacity 0.2s ease;
   }
   
-  .purple-link {
-    color: #9333ea;
+  .blue-link {
+    color: #6383ff;
   }
   
-  .orange-link {
-    color: #f97316;
+  .purple-link {
+    color: #c560f0;
   }
   
   .game-link:hover {

@@ -28,13 +28,13 @@ export default function GameSelection() {
                 <span>10 Challenges</span>
               </div>
 
-              <ul className="game-features purple">
+              <ul className="game-features blue">
                 <li>Upload photos for each challenge</li>
                 <li>Earn points for your team</li>
                 <li>Compete on the leaderboard</li>
               </ul>
 
-              <Link to="/scavenger-hunt" className="game-link purple-link">
+              <Link to="/scavenger-hunt" className="game-link blue-link">
                 Start Hunting →
               </Link>
             </div>
@@ -55,13 +55,13 @@ export default function GameSelection() {
                 <span>15 Questions</span>
               </div>
 
-              <ul className="game-features orange">
+              <ul className="game-features purple">
                 <li>Multiple choice questions</li>
                 <li>Learn campus facts & history</li>
                 <li>Beat your high score</li>
               </ul>
 
-              <Link to="/trivia" className="game-link orange-link">
+              <Link to="/trivia" className="game-link purple-link">
                 Start Quiz →
 
               </Link>
