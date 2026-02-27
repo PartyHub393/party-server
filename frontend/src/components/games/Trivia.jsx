@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect, useRef} from 'react';
 import './Trivia.css'
 import {fetchQuestion} from '../../api'
 import { useSocket } from '../../useSocket'
@@ -15,6 +15,16 @@ export default function Trivia() {
     const [playerCount, setPlayerCount] = useState(0);
 
     const { socket, roomCode } = useSocket()
+
+    const correctNumberAnswered = useRef(0);
+
+    useEffect(() => {
+        correctNumberAnswered.current = answeredCount;
+
+        if(answeredCount >= playerCount) {
+            setTimeLeft(0);
+        }
+    }, [answeredCount]);
 
     const handleStartGame = () => {
         setTimeLeft(30);
@@ -50,10 +60,6 @@ export default function Trivia() {
         
         socket.on('player_answered', () => {
             setAnsweredCount(prev => prev + 1);
-
-            if(answeredCount + 1 >= playerCount) {
-                setTimeLeft(0);
-            }
         });
 
         return () => {
