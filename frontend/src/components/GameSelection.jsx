@@ -5,7 +5,7 @@ import "./GameSelection.css";
 export default function GameSelection() {
   return (
     <div className="games-page">
-      <WelcomeBanner />
+      <WelcomeBanner variant="dark"/>
       <div className="games-container">
         <h1 className="games-title">Orientation Week Games</h1>
         <p className="games-subtitle">
