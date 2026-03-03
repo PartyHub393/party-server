@@ -1,0 +1,105 @@
+{
+  "categories": [
+    {
+      "id": "campus",
+      "name": "Campus",
+      "description": "Explore key locations around CWRU's campus.",
+      "challenges": [
+        {
+          "id": "campus-1",
+          "title": "Find the Spartan Statue",
+          "description": "Take a group photo with the famous CWRU Spartan statue.",
+          "points": 10
+        },
+        {
+          "id": "campus-2",
+          "title": "Library Landmark",
+          "description": "Snap a picture of your team in front of Kelvin Smith Library.",
+          "points": 10
+        },
+        {
+          "id": "campus-3",
+          "title": "Hidden Study Spot",
+          "description": "Discover and photograph a cozy study spot on campus.",
+          "points": 10
+        }
+      ]
+    },
+    {
+      "id": "team",
+      "name": "Team",
+      "description": "Get to know your group members.",
+      "challenges": [
+        {
+          "id": "team-1",
+          "title": "Team Pyramid",
+          "description": "Create a human pyramid with your group and capture the moment.",
+          "points": 10
+        },
+        {
+          "id": "team-2",
+          "title": "Fun Fact Circle",
+          "description": "Record a short video where each teammate shares a fun fact.",
+          "points": 10
+        },
+        {
+          "id": "team-3",
+          "title": "Matching Pose",
+          "description": "Take a photo where everyone strikes the same pose in front of a campus landmark.",
+          "points": 10
+        }
+      ]
+    },
+    {
+      "id": "creative",
+      "name": "Creative",
+      "description": "Show off your artistic and silly side.",
+      "challenges": [
+        {
+          "id": "creative-1",
+          "title": "CWRU Album Cover",
+          "description": "Stage a dramatic group photo that could be the cover of your first CWRU album.",
+          "points": 10
+        },
+        {
+          "id": "creative-2",
+          "title": "Campus Mascot Remix",
+          "description": "Draw or act out your own version of the CWRU mascot and take a photo.",
+          "points": 10
+        },
+        {
+          "id": "creative-3",
+          "title": "Human Letters",
+          "description": "Arrange your team to spell out 'CWRU' with your bodies and capture it from above.",
+          "points": 10
+        }
+      ]
+    },
+    {
+      "id": "academic",
+      "name": "Academic",
+      "description": "Engage with academic spaces and themes on campus.",
+      "challenges": [
+        {
+          "id": "academic-1",
+          "title": "Major Matchup",
+          "description": "Take a picture outside a building related to at least one teammate's intended major.",
+          "points": 10
+        },
+        {
+          "id": "academic-2",
+          "title": "Study Squad",
+          "description": "Pose as if you are in an intense study session in a classroom or study space.",
+          "points": 10
+        },
+        {
+          "id": "academic-3",
+          "title": "Professor Quote",
+          "description": "Find an academic quote or motto on campus and photograph your team around it.",
+          "points": 10
+        }
+      ]
+    }
+  ]
+}
+

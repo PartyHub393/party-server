@@ -5,7 +5,11 @@ const pool = new Pool({
   database: process.env.PGDATABASE || 'postgres',
   user: process.env.PGUSER || 'postgres.fvzxeyflnzpyqcdayacc',
   password: process.env.PGPASSWORD || 'P9lVFj2ZM1AscMFE',
-  port: 5432
+  port: Number(process.env.PGPORT) || 5432,
+  // Supabase and other managed Postgres providers require SSL
+  ssl: process.env.PGHOST
+    ? { rejectUnauthorized: false }
+    : false,
 });
 
 const createUserTable = async () => {

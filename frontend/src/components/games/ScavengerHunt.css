@@ -172,6 +172,148 @@
   .half-width {
     grid-column: span 1;
   }
+
+  .scavenger-error {
+    margin-top: 1rem;
+    color: #ff8a80;
+  }
+
+  .scavenger-success {
+    margin-top: 0.5rem;
+    color: #81c784;
+  }
+
+  .category-description {
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    opacity: 0.9;
+  }
+
+  .challenge-list {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0;
+    width: 100%;
+    text-align: left;
+  }
+
+  .challenge-item + .challenge-item {
+    margin-top: 0.75rem;
+  }
+
+  .challenge-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+  }
+
+  .challenge-title {
+    color: #ffd54f;
+  }
+
+  .challenge-points {
+    font-size: 0.85rem;
+    opacity: 0.9;
+  }
+
+  .challenge-description {
+    margin: 0.25rem 0 0;
+    font-size: 0.9rem;
+    opacity: 0.85;
+  }
+
+  .photo-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .photo-card {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+  }
+
+  .photo-card img {
+    width: 100%;
+    border-radius: 0.5rem;
+    object-fit: cover;
+  }
+
+  .photo-challenge-label {
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+    opacity: 0.9;
+  }
+
+  .photo-comment-input {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 0.5rem;
+    border: none;
+    font-size: 0.9rem;
+  }
+
+  .photo-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .photo-approve-button,
+  .photo-deny-button {
+    flex: 1;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.5rem;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .photo-approve-button {
+    background: #81c784;
+    color: #1a0a2e;
+  }
+
+  .photo-deny-button {
+    background: #ff8a80;
+    color: #1a0a2e;
+  }
+
+  .photo-status {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .challenge-upload-row {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .upload-button {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    background: #ffd54f;
+    color: #1a0a2e;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .challenge-status {
+    font-size: 0.85rem;
+    opacity: 0.9;
+  }
+
+  .challenge-comment {
+    font-style: italic;
+  }
   
   /* Responsive fix */
   @media (max-width: 600px) {

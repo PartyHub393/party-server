@@ -16,7 +16,8 @@ const io = new Server(httpServer, {
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+// Increase JSON body size limit so base64-encoded image uploads for scavenger hunt work
+app.use(express.json({ limit: '10mb' }));
 
 app.use('/', apiRoutes);
 

@@ -42,7 +42,7 @@ export default function JoinScreen() {
       if(gameType === "trivia"){
         navigate(`/play-trivia`)
       } else if (gameType === "scavenger"){
-        navigate('/scavengerplay/')
+        navigate('/scavenger-hunt/play')
       }
     })
 
@@ -67,6 +67,7 @@ export default function JoinScreen() {
       return
     }
     setJoining(true)
+    localStorage.setItem('dc_username', name)
     socket.emit('join_room', { roomCode: code, username: name })
   }
 
