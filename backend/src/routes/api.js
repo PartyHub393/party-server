@@ -150,6 +150,31 @@ router.post('/api/scavenger/review', (req, res) => {
   });
 });
 
+// Player cancels an upload (only allowed while pending)
+router.post('/api/scavenger/cancel', (req, res) => {
+  const { submissionId } = req.body;
+
+  if (!submissionId) {
+    return res.status(400).json({ error: 'submissionId is required.' });
+  }
+
+  const index = scavengerState.submissions.findIndex((s) => s.id === submissionId);
+  if (index === -1) {
+    return res.status(404).json({ error: 'Submission not found.' });
+  }
+
+  const submission = scavengerState.submissions[index];
+  if (submission.approved !== null) {
+    return res
+      .status(400)
+      .json({ error: 'Cannot cancel a submission after it has been reviewed.' });
+  }
+
+  scavengerState.submissions.splice(index, 1);
+
+  return res.json({ state: scavengerState });
+});
+
 router.post('/api/rooms', (req, res) => {
   const roomCode = createRoom();
   res.json({ roomCode });

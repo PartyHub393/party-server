@@ -15,6 +15,7 @@ export default function ScavengerHuntStart() {
   const [challenges, setChallenges] = useState(null);
   const [error, setError] = useState("");
   const [reviewingId, setReviewingId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
   const [commentDrafts, setCommentDrafts] = useState({});
 
   useEffect(() => {
@@ -102,6 +103,7 @@ export default function ScavengerHuntStart() {
       setError(err.message || "Failed to review submission");
     } finally {
       setReviewingId(null);
+      setEditingId(null);
     }
   }
 
@@ -194,49 +196,74 @@ export default function ScavengerHuntStart() {
             <h3>Photo Gallery</h3>
             {state?.submissions && state.submissions.length > 0 ? (
               <div className="photo-gallery-grid">
-                {state.submissions.map((sub) => (
-                  <div key={sub.id} className="photo-card">
-                    <p className="photo-challenge-label">
-                      {getChallengeById(sub.challengeId)?.title || sub.challengeId}
-                    </p>
-                    <img src={sub.imageData} alt={sub.challengeId} />
-                    <textarea
-                      className="photo-comment-input"
-                      placeholder="Optional comment to player..."
-                      value={commentDrafts[sub.id] ?? sub.comment ?? ""}
-                      onChange={(e) => handleCommentChange(sub.id, e.target.value)}
-                    />
-                    <div className="photo-actions">
-                      <button
-                        type="button"
-                        className="photo-approve-button"
-                        onClick={() => handleReview(sub.id, true)}
-                        disabled={reviewingId === sub.id}
-                      >
-                        Approve
-                      </button>
-                      <button
-                        type="button"
-                        className="photo-deny-button"
-                        onClick={() => handleReview(sub.id, false)}
-                        disabled={reviewingId === sub.id}
-                      >
-                        Deny
-                      </button>
-                    </div>
-                    {sub.approved !== null && (
-                      <p className="photo-status">
-                        Status: {sub.approved ? "Approved" : "Denied"}
-                        {sub.comment && (
-                          <>
-                            {" "}
-                            • Comment: <span>{sub.comment}</span>
-                          </>
-                        )}
+                {state.submissions.map((sub) => {
+                  const isPending = sub.approved === null;
+                  const isEditing = isPending || editingId === sub.id;
+                  const hasComment = !!sub.comment;
+                  const commentValue = commentDrafts[sub.id] ?? sub.comment ?? "";
+
+                  return (
+                    <div key={sub.id} className="photo-card">
+                      <p className="photo-challenge-label">
+                        {getChallengeById(sub.challengeId)?.title || sub.challengeId}
                       </p>
-                    )}
-                  </div>
-                ))}
+                      <p className="photo-uploader-label">
+                        Uploaded by <strong>{sub.playerName || "Player"}</strong>
+                      </p>
+                      <img src={sub.imageData} alt={sub.challengeId} />
+
+                      {isEditing ? (
+                        <textarea
+                          className="photo-comment-input"
+                          placeholder="Optional comment to player..."
+                          value={commentValue}
+                          onChange={(e) => handleCommentChange(sub.id, e.target.value)}
+                        />
+                      ) : hasComment ? (
+                        <div className="photo-comment-display">
+                          Comment: <span>{sub.comment}</span>
+                        </div>
+                      ) : null}
+
+                      {isEditing ? (
+                        <div className="photo-actions">
+                          <button
+                            type="button"
+                            className="photo-approve-button"
+                            onClick={() => handleReview(sub.id, true)}
+                            disabled={reviewingId === sub.id}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            className="photo-deny-button"
+                            onClick={() => handleReview(sub.id, false)}
+                            disabled={reviewingId === sub.id}
+                          >
+                            Deny
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="photo-actions">
+                          <button
+                            type="button"
+                            className="photo-edit-button"
+                            onClick={() => setEditingId(sub.id)}
+                          >
+                            Edit review
+                          </button>
+                        </div>
+                      )}
+
+                      {sub.approved !== null && (
+                        <p className="photo-status">
+                          Status: {sub.approved ? "Approved" : "Denied"}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <p>No photos uploaded yet.</p>

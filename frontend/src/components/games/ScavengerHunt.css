@@ -247,12 +247,27 @@
     opacity: 0.9;
   }
 
+  .photo-uploader-label {
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+    opacity: 0.85;
+  }
+
   .photo-comment-input {
     width: 100%;
     margin-top: 0.5rem;
     padding: 0.4rem 0.5rem;
     border-radius: 0.5rem;
     border: none;
+    font-size: 0.9rem;
+  }
+
+  .photo-comment-display {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 0.5rem;
+    background: rgba(0, 0, 0, 0.3);
     font-size: 0.9rem;
   }
 
@@ -288,6 +303,18 @@
     font-size: 0.85rem;
   }
 
+  .photo-edit-button {
+    width: 100%;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.5rem;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffd54f;
+  }
+
   .challenge-upload-row {
     margin-top: 0.5rem;
     display: flex;
@@ -309,10 +336,24 @@
   .challenge-status {
     font-size: 0.85rem;
     opacity: 0.9;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.5rem;
+    align-items: center;
   }
 
   .challenge-comment {
     font-style: italic;
+  }
+
+  .cancel-upload-button {
+    padding: 0.2rem 0.6rem;
+    border-radius: 0.5rem;
+    border: none;
+    font-size: 0.8rem;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ff8a80;
   }
   
   /* Responsive fix */

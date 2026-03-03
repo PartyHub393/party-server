@@ -146,3 +146,19 @@ export async function reviewScavengerSubmission({ submissionId, approved, commen
   if (!res.ok) throw new Error(data?.error || 'Failed to review submission')
   return data
 }
+
+export async function cancelScavengerSubmission({ submissionId }) {
+  let res
+  try {
+    res = await fetch(`${API_BASE}/api/scavenger/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ submissionId }),
+    })
+  } catch (err) {
+    throw new Error('Cannot reach server. Is the backend running on port 3000?')
+  }
+  const data = await parseJson(res)
+  if (!res.ok) throw new Error(data?.error || 'Failed to cancel submission')
+  return data
+}

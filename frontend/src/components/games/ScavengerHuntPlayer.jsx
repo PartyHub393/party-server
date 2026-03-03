@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from "react";
 import "./ScavengerHunt.css";
-import { getScavengerChallenges, getScavengerState, submitScavengerPhoto } from "../../api";
+import {
+  getScavengerChallenges,
+  getScavengerState,
+  submitScavengerPhoto,
+  cancelScavengerSubmission,
+} from "../../api";
 
 export default function ScavengerHuntPlayer() {
   const [data, setData] = useState(null);
   const [state, setState] = useState(null);
   const [error, setError] = useState("");
   const [uploadingId, setUploadingId] = useState(null);
+  const [cancellingId, setCancellingId] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -92,6 +98,19 @@ export default function ScavengerHuntPlayer() {
     handleUpload(challengeId, file);
   }
 
+  async function handleCancel(submissionId) {
+    setCancellingId(submissionId);
+    setError("");
+    try {
+      const { state: newState } = await cancelScavengerSubmission({ submissionId });
+      setState(newState);
+    } catch (err) {
+      setError(err.message || "Failed to cancel upload");
+    } finally {
+      setCancellingId(null);
+    }
+  }
+
   return (
     <div className="scavenger-host-screen">
       <div className="category-selection">
@@ -137,6 +156,16 @@ export default function ScavengerHuntPlayer() {
                                   ? "Approved"
                                   : "Denied"}
                             </span>
+                            {latest.approved === null && (
+                              <button
+                                type="button"
+                                className="cancel-upload-button"
+                                onClick={() => handleCancel(latest.id)}
+                                disabled={cancellingId === latest.id}
+                              >
+                                {cancellingId === latest.id ? "Cancelling..." : "Cancel upload"}
+                              </button>
+                            )}
                             {latest.comment && (
                               <span className="challenge-comment">
                                 {" "}
