@@ -75,6 +75,7 @@ export default function Trivia() {
             return () => clearTimeout(timerId);
         } else if (timeLeft === 0 && gameState === 'playing') {
             console.log("Time's up!");
+            socket.emit('reveal_answer', { roomCode: roomCode, question: questionData.question, options: questionData.options, answer: questionData.answer });
         }
     }, [timeLeft, gameState]);
 
