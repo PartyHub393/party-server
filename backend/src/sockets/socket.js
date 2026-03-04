@@ -7,6 +7,17 @@ const {
   removeRoom,
 } = require('../rooms');
 
+const {
+  initializeTriviaGame,
+  getTriviaGame,
+  setCurrentQuestion,
+  recordPlayerAnswer,
+  validateAndAwardPoints,
+  getLeaderboard,
+  endTriviaGame,
+  removePlayerFromTrivia,
+} = require('../games/trivia');
+
 module.exports = function(io) {
   io.on('connection', (socket) => {
     socket.on('host_room', (roomCode) => {
@@ -38,16 +49,6 @@ module.exports = function(io) {
       socket.to(code).emit('player_joined', { players });
     });
 
-    socket.on('disconnect', () => {
-      const roomsJoined = Array.from(socket.rooms).filter((r) => r !== socket.id);
-      roomsJoined.forEach((code) => {
-        const players = removePlayer(code, socket.id);
-        if (players !== null) {
-          io.to(code).emit('player_joined', { players });
-        }
-      });
-    });
-
     socket.on('host_closed', () => {
       const roomsJoined = Array.from(socket.rooms).filter((r) => r !== socket.id);
       roomsJoined.forEach((code) => {
@@ -76,6 +77,10 @@ module.exports = function(io) {
         return;
       }
 
+      if (game === 'trivia') {
+        initializeTriviaGame(code);
+      }
+
       socket.to(code).emit('game_started',{roomCode: code, gameType: game}); 
 
     }); 
@@ -93,6 +98,11 @@ module.exports = function(io) {
         return;
       }
 
+      const trivia = getTriviaGame(code);
+      if (trivia) {
+        setCurrentQuestion(code, { question, options });
+      }
+
       socket.to(code).emit('new_question', { question, options });
 
     });
@@ -104,6 +114,12 @@ module.exports = function(io) {
         socket.emit('player_answered', { message: 'Room not found or not in room' });
         return;
       }
+
+      const trivia = getTriviaGame(code);
+      if (trivia) {
+        recordPlayerAnswer(code, socket.id, username, answerIndex, qid);
+      }
+
       socket.to(code).emit('player_answered',{username,answerIndex,qid});
     });
 
@@ -119,6 +135,72 @@ module.exports = function(io) {
       callback({ count: room.players.length });
       return;
       
+    });
+
+    socket.on('reveal_answer', ({ roomCode, question, options, answer }) => {
+      const code = (roomCode || '').toUpperCase();
+      const room = getRoom(code);
+
+      if (!room || room.hostId !== socket.id) {
+        socket.emit('host_error', { message: 'Only the host can reveal answers.' });
+        return;
+      }
+
+      const trivia = getTriviaGame(code);
+      if (!trivia) {
+        socket.emit('host_error', { message: 'Trivia game not found.' });
+        return;
+      }
+
+      // Validate and award points for all player answers
+      const results = validateAndAwardPoints(code, { question, options, answer });
+
+      // Emit answer reveal and results to all players
+      io.to(code).emit('answer_revealed', {
+        correctAnswer: answer,
+        playerResults: results,
+      });
+    });
+
+    socket.on('get_trivia_leaderboard', ({ roomCode }, callback) => {
+      const code = (roomCode || '').toUpperCase();
+      const room = getRoom(code);
+
+      if (!room) {
+        socket.emit('leaderboard_error', { message: 'Room not found' });
+        return;
+      }
+
+      const leaderboard = getLeaderboard(code);
+      if (callback) {
+        callback({ leaderboard });
+      }
+    });
+
+    socket.on('end_trivia', ({ roomCode }) => {
+      const code = (roomCode || '').toUpperCase();
+      const room = getRoom(code);
+
+      if (!room || room.hostId !== socket.id) {
+        socket.emit('host_error', { message: 'Only the host can end the trivia game.' });
+        return;
+      }
+
+      const finalStats = endTriviaGame(code);
+      io.to(code).emit('trivia_ended', { finalStats });
+    });
+
+    socket.on('disconnect', () => {
+      const roomsJoined = Array.from(socket.rooms).filter((r) => r !== socket.id);
+      roomsJoined.forEach((code) => {
+        // Clean up trivia player data
+        removePlayerFromTrivia(code, socket.id);
+
+        const players = removePlayer(code, socket.id);
+        if (players !== null) {
+          io.to(code).emit('player_joined', { players });
+        }
+      });
     });
   });
 };

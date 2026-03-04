@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import './App.css'
 import LoginPage from './login/Login'
 import GameSelection from './components/GameSelection'
+import Dashboard from './components/Dashboard/dashboard'
 import Trivia from './components/games/Trivia'
 import ScavengerHunt from './components/games/ScavengerHunt'
 import ScavengerHuntGame from './components/games/ScavengerHuntGame'
@@ -32,6 +33,12 @@ function App() {
               <ProtectedRoute>
                 <GameSelection />
               </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <Dashboard />
             }
           />
           

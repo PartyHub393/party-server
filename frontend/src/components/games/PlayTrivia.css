@@ -1,3 +1,6 @@
+h1 {
+  color: white;
+}
 
 .play-trivia-screen {
   min-height: 100vh;
@@ -86,6 +89,42 @@
   margin: 0 auto;
 }
 
+.play-trivia__answers.revealed .play-trivia__answer {
+  cursor: default;
+  transform: none;
+  opacity: 0.6;
+}
+
+.play-trivia__answer.correct {
+  opacity: 1 !important;
+  background-color: #4ade80;
+  border-color: #22c55e;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.4);
+}
+
+.play-trivia__answer.incorrect {
+  opacity: 1 !important;
+  background: rgba(244, 67, 54, 0.2) !important;
+  border-color: #f44336 !important;
+  text-decoration: line-through;
+}
+
+.play-trivia__answer.selected {
+  opacity: 1;
+  border-width: 3px;
+}
+
+
+@keyframes score-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); color: #4caf50; }
+  100% { transform: scale(1); }
+}
+
+.score-increase {
+  animation: score-pop 0.4s ease-out;
+}
 
 .play-trivia__answer {
   padding: 1.5rem 1.25rem;
