@@ -9,6 +9,7 @@ import {
 
 export default function ScavengerHuntStart() {
   const [teamName, setTeamName] = useState("");
+  const [editClicked, setEditClicked] = useState(false);
   const [savingTeam, setSavingTeam] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const [state, setState] = useState(null);
@@ -62,6 +63,7 @@ export default function ScavengerHuntStart() {
       const res = await setScavengerTeamName(teamName.trim());
       setTeamName(res.teamName);
       setSaveMessage("Team name saved!");
+      setEditClicked(false);
     } catch (err) {
       setError(err.message || "Failed to save team name");
     } finally {
@@ -118,6 +120,8 @@ export default function ScavengerHuntStart() {
           {/* Team Name Card */}
           <div className="category-card full-width">
             <h3>Team Name</h3>
+            {editClicked || !state?.teamName ? (
+            <>
             <input
               type="text"
               placeholder="Enter your team name..."
@@ -132,6 +136,20 @@ export default function ScavengerHuntStart() {
             >
               {savingTeam ? "Saving..." : "Save"}
             </button>
+            </>
+            ) : (
+              <>
+              <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '1rem 0' }}>
+                {state.teamName}
+              </p>
+              <button 
+                className="save-team-button" 
+                onClick={() => setEditClicked(true)}
+              >
+                Edit
+              </button>
+              </>
+            )}
             {saveMessage && <p className="scavenger-success">{saveMessage}</p>}
           </div>
 
