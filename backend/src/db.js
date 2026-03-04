@@ -21,11 +21,27 @@ const createUserTable = async () => {
       password_hash TEXT NOT NULL,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS groups (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      name VARCHAR(100) NOT NULL,
+      description TEXT,
+      created_by UUID REFERENCES users(id),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS group_members (
+      group_id UUID REFERENCES groups(id) ON DELETE CASCADE,
+      user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+      joined_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      role VARCHAR(20) DEFAULT 'member',
+      PRIMARY KEY (group_id, user_id)
+    );
   `;
   try {
     await pool.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
     await pool.query(queryText); 
-    console.log("User table is ready.");
+    console.log("Group and users table is ready.");
   } catch (err) {
     console.error("Error creating user table:", err.message || err);
     console.log("Server will continue without database. Room/player features will work, but user auth requires DB.");
