@@ -1,6 +1,6 @@
 import React from 'react';
 import './dashboard.css';
-import Navbar from '../../components/Navbar/navbar';
+import Navbar from '../Navbar/navbar';
 
 export default function Dashboard() {
   // Placeholder
