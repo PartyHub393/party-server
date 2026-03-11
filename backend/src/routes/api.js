@@ -2,9 +2,17 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
 const { hash, compare } = require('bcrypt');
-const { createRoom } = require('../rooms');
 const questions = require('../data/questions.json');
 const scavengerChallenges = require('../data/scavengerChallenges.json');
+
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function generateGroupCode() {
+  return Array.from(
+    { length: 6 },
+    () => LETTERS[Math.floor(Math.random() * LETTERS.length)]
+  ).join('');
+}
 
 // Simple in-memory scavenger state for a single team/session.
 // In a production system this would be keyed by room/session and persisted in the database.
@@ -175,26 +183,166 @@ router.post('/api/scavenger/cancel', (req, res) => {
   return res.json({ state: scavengerState });
 });
 
-router.post('/api/rooms', (req, res) => {
-  const roomCode = createRoom();
-  res.json({ roomCode });
+router.get('/api/host/groups', async (req, res) => {
+  const userId = req.query.userId;
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized: userId required.' });
+  }
+
+  try {
+    const userRes = await pool.query('SELECT id, role FROM users WHERE id = $1', [userId]);
+    if (userRes.rows.length === 0) {
+      return res.status(401).json({ error: 'Unauthorized: user not found.' });
+    }
+
+    const user = userRes.rows[0];
+    if (user.role !== 'host') {
+      return res.status(403).json({ error: 'Only hosts may query groups.' });
+    }
+
+    const groupsRes = await pool.query(
+      'SELECT id, code, name, description, created_at, is_locked FROM groups WHERE created_by = $1 ORDER BY created_at DESC',
+      [userId]
+    );
+
+    return res.json({ groups: groupsRes.rows });
+  } catch (err) {
+    console.error('Host groups query error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get groups that a player is a member of (persisted via group_members)
+router.get('/api/player/groups', async (req, res) => {
+  const userId = req.query.userId;
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized: userId required.' });
+  }
+
+  try {
+    const userRes = await pool.query('SELECT id FROM users WHERE id = $1', [userId]);
+    if (userRes.rows.length === 0) {
+      return res.status(401).json({ error: 'Unauthorized: user not found.' });
+    }
+
+    const groupsRes = await pool.query(
+      `SELECT g.id, g.code, g.name, g.description, g.created_by, g.created_at, g.is_locked
+       FROM groups g
+       JOIN group_members m ON m.group_id = g.id
+       WHERE m.user_id = $1
+       ORDER BY g.created_at DESC`,
+      [userId]
+    );
+
+    return res.json({ groups: groupsRes.rows });
+  } catch (err) {
+    console.error('Player groups query error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/api/rooms', async (req, res) => {
+  const { userId } = req.body;
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized: userId required.' });
+  }
+
+  try {
+    const userRes = await pool.query('SELECT id, role FROM users WHERE id = $1', [userId]);
+    if (userRes.rows.length === 0) {
+      return res.status(401).json({ error: 'Unauthorized: user not found.' });
+    }
+
+    const user = userRes.rows[0];
+    if (user.role !== 'host') {
+      return res.status(403).json({ error: 'Only hosts may create rooms.' });
+    }
+  } catch (err) {
+    console.error('Room creation auth error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+
+  // Generate a unique room code and persist it so it can be loaded later.
+  let roomCode;
+  let createdGroup = null;
+
+  // Keep trying until we create a group and insert it into DB without conflict.
+  while (!createdGroup) {
+    roomCode = generateGroupCode();
+    try {
+      const groupName = `Group ${roomCode}`;
+      const insertQuery = `
+        INSERT INTO groups (code, name, created_by, is_locked)
+        VALUES ($1, $2, $3, FALSE)
+        ON CONFLICT (code) DO NOTHING
+        RETURNING id, code, name, description, created_by, created_at, is_locked
+      `;
+      const insertRes = await pool.query(insertQuery, [roomCode, groupName, userId]);
+      createdGroup = insertRes.rows[0];
+    } catch (err) {
+      console.error('Error creating group in DB:', err);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  res.json({ roomCode, group: createdGroup });
+});
+
+router.post('/api/groups/lock', async (req, res) => {
+  const { groupCode, userId, isLocked } = req.body;
+
+  if (!groupCode || !userId || typeof isLocked !== 'boolean') {
+    return res.status(400).json({ error: 'groupCode, userId, and isLocked are required.' });
+  }
+
+  const code = (groupCode || '').trim().toUpperCase();
+
+  try {
+    const userRes = await pool.query('SELECT id, role FROM users WHERE id = $1', [userId]);
+    if (userRes.rows.length === 0) {
+      return res.status(401).json({ error: 'Unauthorized: user not found.' });
+    }
+
+    if (userRes.rows[0].role !== 'host') {
+      return res.status(403).json({ error: 'Only hosts may lock the lobby.' });
+    }
+
+    const updateRes = await pool.query(
+      `UPDATE groups
+       SET is_locked = $1
+       WHERE code = $2 AND created_by = $3
+       RETURNING id, code, name, description, created_by, created_at, is_locked`,
+      [isLocked, code, userId]
+    );
+
+    if (updateRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Group not found or not owned by host.' });
+    }
+
+    return res.json({ group: updateRes.rows[0] });
+  } catch (err) {
+    console.error('Group lock update error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 router.post('/api/createaccount', async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, role } = req.body;
 
   if (!username || !email || !password) {
     return res.status(400).json({ error: 'Username, email, and password are required.' });
   }
 
+  const resolvedRole = role === 'host' ? 'host' : 'player';
+
   try {
     const passwordHash = await hash(password, 10);
     const queryText = `
-      INSERT INTO users (username, email, password_hash)
-      VALUES ($1, $2, $3)
-      RETURNING id, username, email, created_at;
+      INSERT INTO users (username, email, password_hash, role)
+      VALUES ($1, $2, $3, $4)
+      RETURNING id, username, email, role, created_at;
     `;
-    const values = [username, email, passwordHash];
+    const values = [username, email, passwordHash, resolvedRole];
     const result = await pool.query(queryText, values);
 
     res.status(201).json({
@@ -237,12 +385,77 @@ router.post('/api/login', async (req, res) => {
       user: {
         id: user.id,
         username: user.username,
-        email: user.email
+        email: user.email,
+        role: user.role || 'player',
       }
     });
   } catch (err) { 
     console.error('Login error:', err);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Join or create a group via code. Stores membership in group_members.
+router.post('/api/groups/join', async (req, res) => {
+  const { groupCode, userId } = req.body;
+  if (!groupCode || !userId) {
+    return res.status(400).json({ error: 'groupCode and userId are required.' });
+  }
+
+  const code = (groupCode || '').trim().toUpperCase();
+  if (!code) {
+    return res.status(400).json({ error: 'Invalid group code.' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Ensure the group exists; do NOT create it from the join endpoint.
+    const existing = await client.query(
+      'SELECT id, code, name, description, created_by, created_at, is_locked FROM groups WHERE code = $1',
+      [code]
+    );
+    const group = existing.rows[0];
+
+    if (!group) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Group not found. Please get the code from the host.' });
+    }
+
+    const userRes = await client.query('SELECT id, username FROM users WHERE id = $1', [userId]);
+    if (userRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    const membershipRes = await client.query(
+      'SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2',
+      [group.id, userId]
+    );
+    const isExistingMember = membershipRes.rows.length > 0;
+
+    if (group.is_locked && !isExistingMember) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ error: 'This lobby is locked. New members cannot join right now.' });
+    }
+
+    await client.query(
+      `INSERT INTO group_members (group_id, user_id)
+       VALUES ($1, $2)
+       ON CONFLICT (group_id, user_id) DO NOTHING`,
+      [group.id, userId]
+    );
+
+    await client.query('COMMIT');
+
+    return res.json({ group, member: userRes.rows[0] });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Group join error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.release();
   }
 });
 

@@ -4,6 +4,7 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     const storedUser = localStorage.getItem('partyhub_user')
@@ -14,6 +15,7 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('partyhub_user')
       }
     }
+    setLoaded(true)
   }, [])
 
   function login(userData) {
@@ -24,10 +26,20 @@ export function AuthProvider({ children }) {
   function logout() {
     setUser(null)
     localStorage.removeItem('partyhub_user')
+    localStorage.removeItem('joined_group_code')
+    localStorage.removeItem('dc_username')
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        isAuthenticated: !!user,
+        authLoaded: loaded,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )

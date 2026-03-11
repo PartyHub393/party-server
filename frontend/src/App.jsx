@@ -5,13 +5,10 @@ import JoinScreen from './components/JoinScreen'
 import ProtectedRoute from './components/ProtectedRoute'
 import './App.css'
 import LoginPage from './login/Login'
-import GameSelection from './components/GameSelection'
 import Dashboard from './components/Dashboard/dashboard'
-import Trivia from './components/games/Trivia'
-import ScavengerHunt from './components/games/ScavengerHunt'
-import ScavengerHuntGame from './components/games/ScavengerHuntGame'
-import ScavengerHuntPlayer from './components/games/ScavengerHuntPlayer'
-import PlayTrivia from './components/games/PlayTrivia'
+import  JoinSession from './components/Dashboard/JoinSession'
+import UserWaitingRoom from './components/Dashboard/waiting-room'
+
 function App() {
   return (
     <AuthProvider>
@@ -22,58 +19,32 @@ function App() {
           <Route
             path="/"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['host']}>
                 <HostScreen />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/games"
-            element={
-              <ProtectedRoute>
-                <GameSelection />
               </ProtectedRoute>
             }
           />
           <Route
             path="/dashboard"
             element={
-              <Dashboard />
+              <ProtectedRoute allowedRoles={['host']}>
+                <Dashboard />
+              </ProtectedRoute>
             }
           />
-          
-          <Route path="/trivia"
-          element= {
-            <ProtectedRoute>
-              <Trivia />
-            </ProtectedRoute>
-          }
+          <Route path="/user-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['player']}>
+                <JoinSession />
+              </ProtectedRoute>
+            }
           />
-
-          <Route path="/scavenger-hunt"
-          element= {
-            <ProtectedRoute>
-              <ScavengerHunt />
-            </ProtectedRoute>
-          }
-          />
-          <Route path="/scavenger-hunt/start"
-          element= {
-            <ProtectedRoute>
-              <ScavengerHuntGame />
-            </ProtectedRoute>
-          }
-          />
-          <Route path="/scavenger-hunt/play"
-          element= {
-            <ScavengerHuntPlayer />
-          }
-          />
-          <Route path ="/play-trivia"
-          element = {
-            
-              <PlayTrivia/>
-          }
+          <Route path="/waiting-room"
+            element={
+              <ProtectedRoute allowedRoles={['player']}>
+                <UserWaitingRoom />
+              </ProtectedRoute>
+            }
           />
         </Routes>
         

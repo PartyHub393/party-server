@@ -19,6 +19,7 @@ const createUserTable = async () => {
       username VARCHAR(50) UNIQUE NOT NULL,
       email VARCHAR(255) UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
+      role VARCHAR(20) NOT NULL DEFAULT 'player',
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -26,6 +27,8 @@ const createUserTable = async () => {
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       name VARCHAR(100) NOT NULL,
       description TEXT,
+      code VARCHAR(50) UNIQUE,
+      is_locked BOOLEAN NOT NULL DEFAULT FALSE,
       created_by UUID REFERENCES users(id),
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
@@ -40,7 +43,19 @@ const createUserTable = async () => {
   `;
   try {
     await pool.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
-    await pool.query(queryText); 
+    await pool.query(queryText);
+
+    // Backfill columns for existing databases created before these fields existed.
+    await pool.query('ALTER TABLE groups ADD COLUMN IF NOT EXISTS code VARCHAR(50) UNIQUE');
+
+    await pool.query(
+      "ALTER TABLE groups ADD COLUMN IF NOT EXISTS is_locked BOOLEAN NOT NULL DEFAULT FALSE"
+    );
+
+    await pool.query(
+      "ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'player'"
+    );
+
     console.log("Group and users table is ready.");
   } catch (err) {
     console.error("Error creating user table:", err.message || err);

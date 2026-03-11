@@ -1,0 +1,95 @@
+/* Leaderboard Specifics */
+.leaderboard-item:last-child {
+  border-bottom: none;
+}
+
+/* Task Card Highlights */
+.task-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.leaderboard-card {
+  flex: 2; /* Give the leaderboard more room */
+}
+
+.task-card {
+  flex: 1;
+}
+
+/* Responsive adjust for the leaderboard row */
+@media (max-width: 900px) {
+  .row-section {
+    flex-direction: column;
+  }
+}
+
+/* Slim, Sticky Header for Mobile */
+.status-banner {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  margin: -32px -32px 24px -32px; /* Pulls it to the edges of the container */
+  width: calc(100% + 64px);
+}
+
+.status-banner h2 {
+  font-size: 15px;
+  margin: 0;
+  color: var(--primary);
+}
+
+.status-banner p {
+  font-size: 12px;
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.timer-pill {
+  background: var(--primary);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* Responsive Grid */
+.row-section {
+  display: flex;
+  flex-direction: column; /* Stack by default for mobile */
+  gap: 16px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  display: inline-block;
+}
+
+.status-dot.offline {
+  background: #f97316;
+}
+
+/* Tablet/Desktop: Side-by-Side */
+@media (min-width: 768px) {
+  .row-section {
+    flex-direction: row;
+  }
+  
+  .status-banner {
+    border-radius: 16px;
+    margin: 0 0 24px 0;
+    width: 100%;
+    border: 1px solid var(--glass-border);
+  }
+}

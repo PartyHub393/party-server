@@ -34,16 +34,11 @@ export default function JoinScreen() {
       setJoined(false)
       setJoining(false)
     })
-    socket.on('game_started', ({ roomCode, gameType } = {}) => {
+    socket.on('game_started', ({ roomCode } = {}) => {
       const code = (roomCode || '').toUpperCase();
       
       if (!code) return;
-      console.log(gameType);
-      if(gameType === "trivia"){
-        navigate(`/play-trivia`)
-      } else if (gameType === "scavenger"){
-        navigate('/scavenger-hunt/play')
-      }
+      navigate('/waiting-room', { replace: true, state: { groupCode: code } })
     })
 
     return () => {
