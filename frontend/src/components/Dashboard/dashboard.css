@@ -85,6 +85,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-width: 0;
 }
 
 .row-section {
@@ -98,6 +99,7 @@ body {
   padding: 24px;
   box-shadow: var(--card-shadow);
   flex: 1;
+  min-width: 0;
 }
 
 .game-card-wrapper {
@@ -152,6 +154,7 @@ body {
 .game-selection .row-inner {
   flex-direction: row;
   display: flex;
+  gap: 16px;
 }
 
 .game-selection h2 {
@@ -228,6 +231,7 @@ body {
   border-radius: var(--radius-md);
   background: var(--bg-muted);
   gap: 10px;
+  padding: 8px 10px;
 }
 
 .orientees-avatar {
@@ -319,8 +323,69 @@ body {
 
 /* --- Responsive fixes --- */
 @media (max-width: 1100px) {
-  .dashboard-container { flex-direction: column; }
-  .sidebar { width: 100%; box-sizing: border-box; }
-  .game-card-wrapper { flex-direction: column; }
+  .dashboard-view .dashboard-container {
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .dashboard-view .sidebar {
+    width: 100%;
+    box-sizing: border-box;
+    height: auto;
+    max-height: none;
+  }
+
+  .dashboard-view .row-section {
+    flex-direction: column;
+  }
+
+  .dashboard-view .game-selection .row-inner {
+    flex-direction: column;
+  }
+
+  .dashboard-view .game-card-wrapper {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-view .dashboard-container {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .dashboard-view .sidebar,
+  .dashboard-view .card {
+    border-radius: 16px;
+    padding: 16px;
+  }
+
+  .dashboard-view .room-code {
+    font-size: 18px;
+    padding: 12px;
+    letter-spacing: 0.1em;
+  }
+
+  .dashboard-view .card-header-flex,
+  .dashboard-view .target-control {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .dashboard-view .group-actions {
+    flex-direction: column !important;
+  }
+
+  .dashboard-view .group-actions .primary-btn,
+  .dashboard-view .group-actions .secondary-btn,
+  .dashboard-view .main-content .primary-btn {
+    width: 100%;
+  }
+
+  .dashboard-view .mod-cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 

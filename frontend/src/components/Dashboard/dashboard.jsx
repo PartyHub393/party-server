@@ -138,7 +138,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="dashboard-wrapper">
+    <div className="dashboard-wrapper dashboard-view">
       <Navbar />
       <div className="dashboard-container">
         <div className="dashboard-bg" />

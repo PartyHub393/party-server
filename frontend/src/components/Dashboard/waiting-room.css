@@ -1,95 +1,100 @@
-/* Leaderboard Specifics */
-.leaderboard-item:last-child {
-  border-bottom: none;
-}
-
-/* Task Card Highlights */
-.task-card {
+.waiting-room-view .dashboard-container {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  gap: 20px;
+  padding: 24px;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
-.leaderboard-card {
-  flex: 2; /* Give the leaderboard more room */
+.waiting-room-view .sidebar {
+  width: 320px;
+  max-height: calc(100vh - 48px);
+  height: auto;
 }
 
-.task-card {
-  flex: 1;
+.waiting-room-view .main-content {
+  min-width: 0;
 }
 
-/* Responsive adjust for the leaderboard row */
-@media (max-width: 900px) {
-  .row-section {
-    flex-direction: column;
-  }
+.waiting-room-view .sidebar-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-/* Slim, Sticky Header for Mobile */
-.status-banner {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
+.waiting-room-view .orientees-item {
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+
+.waiting-room-view .game-slot {
+  width: 100%;
+}
+
+.waiting-room-view .waiting-hint {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  margin: -32px -32px 24px -32px; /* Pulls it to the edges of the container */
-  width: calc(100% + 64px);
+  border: 1px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
 }
 
-.status-banner h2 {
-  font-size: 15px;
+.waiting-room-view .waiting-hint-title {
   margin: 0;
-  color: var(--primary);
+  font-size: 16px;
+  font-weight: 700;
 }
 
-.status-banner p {
-  font-size: 12px;
-  margin: 0;
+.waiting-room-view .waiting-hint-subtitle {
+  margin: 8px 0 0;
   color: var(--text-muted);
 }
 
-.timer-pill {
-  background: var(--primary);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 800;
-}
-
-/* Responsive Grid */
-.row-section {
-  display: flex;
-  flex-direction: column; /* Stack by default for mobile */
-  gap: 16px;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--success);
-  display: inline-block;
-}
-
-.status-dot.offline {
-  background: #f97316;
-}
-
-/* Tablet/Desktop: Side-by-Side */
-@media (min-width: 768px) {
-  .row-section {
-    flex-direction: row;
+@media (max-width: 1024px) {
+  .waiting-room-view .dashboard-container {
+    flex-direction: column;
+    padding: 18px;
   }
-  
-  .status-banner {
-    border-radius: 16px;
-    margin: 0 0 24px 0;
+
+  .waiting-room-view .sidebar {
     width: 100%;
-    border: 1px solid var(--glass-border);
+    max-height: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .waiting-room-view .dashboard-container {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .waiting-room-view .sidebar,
+  .waiting-room-view .main-content {
+    width: 100%;
+    border-radius: 16px;
+    padding: 16px;
+  }
+
+  .waiting-room-view .room-code {
+    font-size: 18px;
+    padding: 12px;
+    letter-spacing: 0.1em;
+  }
+
+  .waiting-room-view .orientees-list {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .waiting-room-view .waiting-hint {
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .waiting-room-view .waiting-hint-title {
+    font-size: 15px;
   }
 }

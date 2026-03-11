@@ -58,6 +58,13 @@ module.exports = function(io) {
     socket.on('join_room', async ({ roomCode, username }) => {
       const code = (roomCode || '').toUpperCase();
       const userId = socket.handshake.auth?.userId;
+
+      // Check if the user ID is valid before proceeding; do the check earlier
+      if (!userId) {
+        socket.emit('join_error', { message: 'You must be signed in to join a room.' });
+        return;
+      }
+
       let room = getRoom(code);
 
       // If the room is missing, only allow join if the group exists in the DB.
@@ -73,11 +80,6 @@ module.exports = function(io) {
           const isLocked = res.rows[0].is_locked;
 
           if (isLocked) {
-            if (!userId) {
-              socket.emit('join_error', { message: 'This lobby is locked. New members cannot join right now.' });
-              return;
-            }
-
             const memberRes = await pool.query(
               'SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2',
               [groupId, userId]
@@ -88,15 +90,14 @@ module.exports = function(io) {
             }
           }
 
-          if (userId) {
-            // Persist membership so the room can be reconstructed after a restart.
-            await pool.query(
-              `INSERT INTO group_members (group_id, user_id)
-               VALUES ($1, $2)
-               ON CONFLICT (group_id, user_id) DO NOTHING`,
-              [groupId, userId]
-            );
-          }
+          // Persist membership so the room can be reconstructed after a restart.
+          await pool.query(
+            `INSERT INTO group_members (group_id, user_id)
+              VALUES ($1, $2)
+              ON CONFLICT (group_id, user_id) DO NOTHING`,
+            [groupId, userId]
+          );
+          
 
           await createRoomWithCode(code);
           room = getRoom(code);
@@ -104,7 +105,7 @@ module.exports = function(io) {
           socket.emit('join_error', { message: 'Room not found. Check the code.' });
           return;
         }
-      } else if (userId) {
+      } else {
         // Ensure membership is persisted even if the room already exists in memory.
         try {
           const groupRes = await pool.query('SELECT id, is_locked FROM groups WHERE code = $1', [code]);
@@ -134,18 +135,7 @@ module.exports = function(io) {
           // Shouldn't get here honestly
           socket.emit('join_error', { message: 'Room not found. Check the code.' });
           console.warn('Failed to persist group membership to DB:', err);
-        }
-      } else {
-        try {
-          const groupRes = await pool.query('SELECT is_locked FROM groups WHERE code = $1', [code]);
-          if (groupRes.rows.length && groupRes.rows[0].is_locked) {
-            socket.emit('join_error', { message: 'This lobby is locked. New members cannot join right now.' });
-            return;
-          }
-        } catch (err) {
-          // Shouldn't get here honestly
-          socket.emit('join_error', { message: 'Room not found. Check the code.' });
-          console.warn('Failed to check if group is locked in DB:', err);
+          return;
         }
       }
 

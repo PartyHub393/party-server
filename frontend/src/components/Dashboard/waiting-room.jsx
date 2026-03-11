@@ -138,7 +138,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
   const displayedCurrentUser = effectiveCurrentUser;
 
   return (
-    <div className="dashboard-wrapper">
+    <div className="dashboard-wrapper waiting-room-view">
       <div className="dashboard-bg" />
       
       <div className="dashboard-container">
@@ -190,11 +190,11 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
       <GameSlot gameType={activeGame} />
     </div>
   ) : (
-    <div className="waiting-hint" style={{ padding: '24px', textAlign: 'center' }}>
-      <p style={{ margin: 0, fontSize: '16px' }}>
+    <div className="waiting-hint">
+      <p className="waiting-hint-title">
         Waiting for the host to start a game...
       </p>
-      <p style={{ margin: '8px 0 0 0', color: 'var(--text-muted)' }}>
+      <p className="waiting-hint-subtitle">
         Relax and watch the countertop while you wait.
       </p>
     </div>
