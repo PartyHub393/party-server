@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSocket } from '../../useSocket';
 import { useAuth } from '../../contexts/AuthContext';
@@ -32,6 +32,23 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
   const navigate = useNavigate();
 
   const lastJoinedRoomRef = useRef(null);
+  const redirectingRef = useRef(false);
+
+  const redirectToUserDashboard = useCallback((message) => {
+    if (redirectingRef.current) return;
+    redirectingRef.current = true;
+
+    localStorage.removeItem('joined_group_code');
+    setRoomCode(null);
+    navigate('/user-dashboard', {
+      replace: true,
+      state: {
+        message: message || 'Unable to join room.',
+        skipAutoRedirect: true,
+        at: Date.now(),
+      },
+    });
+  }, [navigate, setRoomCode]);
 
   // Verify that the user is actually a member of the group before trying to join the socket room.
   useEffect(() => {
@@ -49,8 +66,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
         if (!canceled) {
           setValidGroup(isValid);
           if (!isValid) {
-            localStorage.removeItem('joined_group_code');
-            navigate('/join', { replace: true });
+            redirectToUserDashboard('You no longer have access to this lobby.');
           }
         }
       } catch (err) {
@@ -64,7 +80,53 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
     return () => {
       canceled = true;
     };
-  }, [user?.id, effectiveRoomCode, navigate]);
+  }, [user?.id, effectiveRoomCode, redirectToUserDashboard]);
+
+  useEffect(() => {
+    if (!connected || !effectiveRoomCode) return;
+
+    const handlePlayerJoined = ({ players }) => {
+      setOrientees(players || []);
+    };
+
+    const handleJoinSuccess = ({ players }) => {
+      setOrientees(players || []);
+    };
+
+    const handleJoinError = ({ message }) => {
+      redirectToUserDashboard(message || 'Unable to join room.');
+    };
+
+    const handleGameStarted = ({ gameType }) => {
+      setActiveGame(gameType);
+    };
+
+    const handleGameEnded = () => {
+      setActiveGame(null);
+    };
+
+    const handleForcedLeave = ({ message }) => {
+      redirectToUserDashboard(message || 'You have been banned from the room.');
+    };
+
+    socket.on('player_joined', handlePlayerJoined);
+    socket.on('join_success', handleJoinSuccess);
+    socket.on('join_error', handleJoinError);
+    socket.on('game_started', handleGameStarted);
+    socket.on('trivia_ended', handleGameEnded);
+    socket.on('kicked', handleForcedLeave);
+    socket.on('banned', handleForcedLeave);
+
+    return () => {
+      socket.off('player_joined', handlePlayerJoined);
+      socket.off('join_success', handleJoinSuccess);
+      socket.off('join_error', handleJoinError);
+      socket.off('game_started', handleGameStarted);
+      socket.off('trivia_ended', handleGameEnded);
+      socket.off('kicked', handleForcedLeave);
+      socket.off('banned', handleForcedLeave);
+    };
+  }, [connected, socket, effectiveRoomCode, redirectToUserDashboard]);
 
   useEffect(() => {
     if (!connected) {
@@ -73,7 +135,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
     }
 
     if (!effectiveRoomCode) {
-      navigate('/dashboard', { replace: true });
+      redirectToUserDashboard('No active room found.');
       return;
     }
 
@@ -94,45 +156,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
 
     socket.emit('join_room', { roomCode: effectiveRoomCode, username });
     lastJoinedRoomRef.current = effectiveRoomCode;
-  }, [connected, socket, effectiveRoomCode, effectiveCurrentUser, user, validGroup]);
-
-  useEffect(() => {
-    if (!connected || !effectiveRoomCode) return;
-
-    const handlePlayerJoined = ({ players }) => {
-      setOrientees(players || []);
-    };
-
-    const handleJoinSuccess = ({ players }) => {
-      setOrientees(players || []);
-    };
-
-    const handleJoinError = ({ message }) => {
-      console.warn('Join error:', message);
-    };
-
-    const handleGameStarted = ({ gameType }) => {
-      setActiveGame(gameType);
-    };
-
-    const handleGameEnded = () => {
-      setActiveGame(null);
-    };
-
-    socket.on('player_joined', handlePlayerJoined);
-    socket.on('join_success', handleJoinSuccess);
-    socket.on('join_error', handleJoinError);
-    socket.on('game_started', handleGameStarted);
-    socket.on('trivia_ended', handleGameEnded);
-
-    return () => {
-      socket.off('player_joined', handlePlayerJoined);
-      socket.off('join_success', handleJoinSuccess);
-      socket.off('join_error', handleJoinError);
-      socket.off('game_started', handleGameStarted);
-      socket.off('trivia_ended', handleGameEnded);
-    };
-  }, [connected, socket, effectiveRoomCode]);
+  }, [connected, socket, effectiveRoomCode, effectiveCurrentUser, user, validGroup, redirectToUserDashboard, setRoomCode]);
 
   const displayedRoomCode = effectiveRoomCode || 'No group selected';
   const displayedCurrentUser = effectiveCurrentUser;

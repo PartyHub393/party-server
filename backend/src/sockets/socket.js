@@ -4,6 +4,7 @@ const {
   setHost,
   addPlayer,
   removePlayer,
+  removePlayerPermanently,
   getPlayers,
   removeRoom,
 } = require('../rooms');
@@ -70,7 +71,13 @@ module.exports = function(io) {
       // If the room is missing, only allow join if the group exists in the DB.
       if (!room) {
         try {
-          const res = await pool.query('SELECT id, is_locked FROM groups WHERE code = $1', [code]);
+          const res = await pool.query(
+            `SELECT id, is_locked,
+                    ($2::uuid = ANY(COALESCE(banned_users, '{}'::uuid[]))) AS is_banned
+             FROM groups
+             WHERE code = $1`,
+            [code, userId]
+          );
           if (res.rows.length === 0) {
             socket.emit('join_error', { message: 'Room not found. Check the code.' });
             return;
@@ -78,6 +85,12 @@ module.exports = function(io) {
 
           const groupId = res.rows[0].id;
           const isLocked = res.rows[0].is_locked;
+          const isBanned = res.rows[0].is_banned;
+
+          if (isBanned) {
+            socket.emit('join_error', { message: 'You have been banned from this lobby.' });
+            return;
+          }
 
           if (isLocked) {
             const memberRes = await pool.query(
@@ -108,10 +121,22 @@ module.exports = function(io) {
       } else {
         // Ensure membership is persisted even if the room already exists in memory.
         try {
-          const groupRes = await pool.query('SELECT id, is_locked FROM groups WHERE code = $1', [code]);
+          const groupRes = await pool.query(
+            `SELECT id, is_locked,
+                    ($2::uuid = ANY(COALESCE(banned_users, '{}'::uuid[]))) AS is_banned
+             FROM groups
+             WHERE code = $1`,
+            [code, userId]
+          );
           if (groupRes.rows.length) {
             const groupId = groupRes.rows[0].id;
             const isLocked = groupRes.rows[0].is_locked;
+            const isBanned = groupRes.rows[0].is_banned;
+
+            if (isBanned) {
+              socket.emit('join_error', { message: 'You have been banned from this lobby.' });
+              return;
+            }
 
             if (isLocked) {
               const memberRes = await pool.query(
@@ -301,6 +326,182 @@ module.exports = function(io) {
           io.to(code).emit('player_joined', { players });
         }
       });
+    });
+
+    // Moderation Events
+
+    socket.on('kick_player', async ({ roomCode, playerId }) => {
+      const code = (roomCode || '').toUpperCase();
+      const room = getRoom(code); 
+
+      // Check room and host permissions
+      if (!room) {
+        socket.emit('host_error', { message: 'Room not found' });
+        return;
+      };
+      if (room.hostId !== socket.id) {
+        socket.emit('host_error', { message: 'Only the host can kick players.' });
+        return;
+      }
+      const player = room.players.find(p => p.id === playerId);
+      if (!player) {
+        socket.emit('host_error', { message: 'Player not found' });
+        return;
+      }
+
+      try {
+        const res = await pool.query('SELECT id FROM groups WHERE code = $1', [code])
+
+        if (res.rows.length === 0) {
+          console.warn('Group not found in database when trying to kick player.');
+          return;
+        }
+        const groupId = res.rows[0].id;
+        pool.query(
+          `DELETE FROM group_members WHERE group_id = $1 AND user_id = $2`,
+          [groupId, player.userId]
+        )
+        
+        io.to(player.socketId).emit('kicked', { message: 'You have been kicked from the room.' });
+        io.sockets.sockets.get(player.socketId)?.leave(code);
+        removePlayerPermanently(code, player.id);
+        io.to(code).emit('player_left', { players: getPlayers(code) });
+      } catch (err) {
+        socket.emit('host_error', { message: 'Failed to remove player from database.' });
+        console.warn('Failed to remove player from group membership in DB:', err);
+      }
+    });
+
+    socket.on('ban_player', async ({ roomCode, playerId }) => {
+      const code = (roomCode || '').toUpperCase();
+      const room = getRoom(code);
+
+      // Check room and host permissions
+      if (!room) {
+        socket.emit('host_error', { message: 'Room not found' });
+        return;
+      }
+      if (room.hostId !== socket.id) {
+        socket.emit('host_error', { message: 'Only the host can ban players.' });
+        return;
+      }
+      const player = room.players.find(p => p.id === playerId);
+      if (!player) {
+        socket.emit('host_error', { message: 'Player not found' });
+        return;
+      }
+      if (!player.userId) {
+        socket.emit('host_error', { message: 'Cannot ban this player: missing user ID.' });
+        return;
+      }
+
+      try {
+        const groupRes = await pool.query('SELECT id FROM groups WHERE code = $1', [code]);
+        if (groupRes.rows.length === 0) {
+          socket.emit('host_error', { message: 'Room not found in database.' });
+          return;
+        }
+
+        const groupId = groupRes.rows[0].id;
+
+        await pool.query(
+          `UPDATE groups
+           SET banned_users = ARRAY(SELECT DISTINCT UNNEST(COALESCE(banned_users, '{}'::uuid[]) || $2::uuid))
+           WHERE id = $1`,
+          [groupId, player.userId]
+        );
+
+        await pool.query(
+          `DELETE FROM group_members WHERE group_id = $1 AND user_id = $2`,
+          [groupId, player.userId]
+        );
+
+        if (player.socketId) {
+          io.to(player.socketId).emit('banned', { message: 'You have been banned from the room.' });
+          io.sockets.sockets.get(player.socketId)?.leave(code);
+        }
+        removePlayerPermanently(code, player.id);
+        
+        io.to(code).emit('player_left', { players: getPlayers(code) });
+      } catch (err) {
+        socket.emit('host_error', { message: 'Failed to ban player from database.' });
+        console.warn('Failed to ban player:', err);
+      }
+    });
+
+
+    socket.on('get_banned_users', async ({ roomCode }, callback) => {
+      const code = (roomCode || '').toUpperCase();
+      const room = getRoom(code);
+
+      if (!room) {
+        if (callback) callback({ bannedUsers: [] });
+        return;
+      }
+
+      if (room.hostId !== socket.id) {
+        socket.emit('host_error', { message: 'Only the host can view banned users.' });
+        if (callback) callback({ bannedUsers: [] });
+        return;
+      }
+
+      try {
+        const res = await pool.query(
+          `SELECT u.id, u.username
+           FROM groups g
+           JOIN users u ON u.id = ANY(COALESCE(g.banned_users, '{}'::uuid[]))
+           WHERE g.code = $1`,
+          [code]
+        );
+
+        if (callback) {
+          callback({
+            bannedUsers: res.rows.map((row) => ({
+              id: row.id,
+              username: row.username || 'Player',
+            })),
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to load banned users:', err);
+        if (callback) callback({ bannedUsers: [] });
+      }
+    });
+
+
+    socket.on('unban_player', async ({ roomCode, playerId }, callback) => {
+      const code = (roomCode || '').toUpperCase();
+      const room = getRoom(code);   
+
+      if (!room) {
+        if (callback) callback({ success: false });
+        return;
+      }
+      if (room.hostId !== socket.id) {
+        socket.emit('host_error', { message: 'Only the host can unban players.' });
+        if (callback) callback({ success: false });
+        return;
+      }
+      try {
+        const groupRes = await pool.query('SELECT id FROM groups WHERE code = $1', [code]);
+        if (groupRes.rows.length === 0) {
+          socket.emit('host_error', { message: 'Room not found in database.' });
+          if (callback) callback({ success: false });
+          return;
+        }
+        const groupId = groupRes.rows[0].id;
+        await pool.query(
+          `UPDATE groups
+            SET banned_users = ARRAY(SELECT UNNEST(COALESCE(banned_users, '{}'::uuid[])) EXCEPT SELECT $2::uuid)
+            WHERE id = $1`,
+          [groupId, playerId]
+        );
+        if (callback) callback({ success: true });
+      } catch (err) {
+        socket.emit('host_error', { message: 'Failed to unban player from database.' });
+        console.warn('Failed to unban player:', err);
+        if (callback) callback({ success: false });
+      }
     });
   });
 };

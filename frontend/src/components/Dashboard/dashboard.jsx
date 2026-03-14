@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getHostGroups, setGroupLock } from '../../api';
@@ -7,12 +7,14 @@ import './dashboard.css';
 import Navbar from '../Navbar/navbar';
 import ScavengerHostPanel from '../games/scavenger/ScavengerHostPanel';
 import TriviaHostPanel from '../games/trivia/TriviaHostPanel';
+import { Popover } from 'react-tiny-popover'
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, isAuthenticated, authLoaded } = useAuth();
   const { socket, connected, setRoomCode } = useSocket();
 
+  // Use the room code from localStorage if available
   const [hostRoomCode, setHostRoomCode] = useState(() => {
     try {
       return window.localStorage.getItem('host_room_code');
@@ -21,27 +23,78 @@ export default function Dashboard() {
     }
   });
   const [isLocked, setIsLocked] = useState(false);
-  const [players, setPlayers] = useState([]);
-  const [error, setError] = useState('');
-  const [isGroupLoading, setIsGroupLoading] = useState(false);
-  const [isLockSaving, setIsLockSaving] = useState(false);
-  const [selectedGame, setSelectedGame] = useState(null);
-  const [activeHostPanel, setActiveHostPanel] = useState(null);
 
+  /** @type {Array<{ id: string, username: string, joinedAt?: string }>} */
+  const [players, setPlayers] = useState([]);
+  /** @type {string | null} */
+  const [error, setError] = useState('');
+  /** @type {boolean} */
+  const [isGroupLoading, setIsGroupLoading] = useState(false);
+  /** @type {boolean} */
+  const [isLockSaving, setIsLockSaving] = useState(false);
+  /** @type {'trivia' | 'scavenger' | null} */
+  const [selectedGame, setSelectedGame] = useState(null);
+  /** @type {'trivia' | 'scavenger' | null} */
+  const [activeHostPanel, setActiveHostPanel] = useState(null);
+  /** @type {boolean} */
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  /** @type {Array<{ id: string, username: string }>} */
+  const [bannedUsers, setBannedUsers] = useState([]);
+  /** @type {'users' | 'banned'} */
+  const [rosterTab, setRosterTab] = useState('users');
+
+  const formatJoinedAt = (joinedAt) => {
+    if (!joinedAt) return 'Unknown';
+    const date = new Date(joinedAt);
+    if (Number.isNaN(date.getTime())) return 'Unknown';
+
+    return date.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  };
+
+  const kickPlayer = (playerId) => {
+    socket.emit('kick_player', { roomCode: hostRoomCode, playerId });
+  };
+
+  const banPlayer = (playerId) => {
+    socket.emit('ban_player', { roomCode: hostRoomCode, playerId });
+  }
+
+  const unbanPlayer = (playerId) => {
+    socket.emit('unban_player', { roomCode: hostRoomCode, playerId }, () => {
+      refreshBannedUsers();
+    });
+  }
+
+  const refreshBannedUsers = useCallback(() => {
+    if (!connected || !hostRoomCode) return;
+
+    socket.emit('get_banned_users', { roomCode: hostRoomCode }, ({ bannedUsers: nextBannedUsers }) => {
+      setBannedUsers(nextBannedUsers || []);
+    });
+  }, [connected, hostRoomCode, socket]);
+
+  // Handle when game is starting
   const startGame = () => {
     if (!selectedGame || !hostRoomCode) return;
     if (selectedGame === 'trivia') {
+      // Start the game for the trivia session
       socket.emit('host_started', { roomCode: hostRoomCode, gameType: 'trivia' });
       setActiveHostPanel('trivia');
     } else if (selectedGame === 'scavenger') {
-      // Scavenger: stay on dashboard, emit start so players get game_started
+
+      // Start the game for the scavenger hunt
       socket.emit('host_started', { roomCode: hostRoomCode, gameType: 'scavenger' });
       setActiveHostPanel('scavenger');
     }
   };
 
   const displayedRoomCode = hostRoomCode;
-  const orientees = players;
 
   useEffect(() => {
     // Only redirect once auth has loaded.
@@ -58,31 +111,45 @@ export default function Dashboard() {
       socket.emit('host_room', hostRoomCode);
     }
 
+    // Host joined and room is ready
     const handleHostJoined = ({ players: initialPlayers }) => {
       setPlayers(initialPlayers || []);
+      refreshBannedUsers();
       setError('');
     };
 
+    // Update player list when someone joins
     const handlePlayerJoined = ({ players: nextPlayers }) => {
       setPlayers(nextPlayers || []);
     };
 
+    const handlePlayerLeft = ({ players: nextPlayers }) => {
+      setPlayers(nextPlayers || []);
+      refreshBannedUsers();
+    };
+
+    // Handle errors related to hosting/joining
     const handleHostError = ({ message }) => {
       setError(message || 'Host error');
     };
 
+    // Listen for real-time updates about the room and players
     socket.once('host_joined', handleHostJoined);
     socket.on('player_joined', handlePlayerJoined);
     socket.on('host_error', handleHostError);
+    socket.on('player_left', handlePlayerLeft);
 
     return () => {
+      // Clean up listeners when component unmounts
       socket.off('host_joined', handleHostJoined);
       socket.off('player_joined', handlePlayerJoined);
       socket.off('host_error', handleHostError);
+      socket.off('player_left', handlePlayerLeft);
     };
-  }, [socket, connected, hostRoomCode, isAuthenticated, user, navigate]);
+  }, [socket, connected, hostRoomCode, isAuthenticated, user, navigate, refreshBannedUsers, setRoomCode]);
 
 
+  // Authenticated host: load their groups and set up the dashboard
   useEffect(() => {
     // Avoid running before auth state is resolved (otherwise we may navigate away too early)
     if (!authLoaded) return;
@@ -91,9 +158,11 @@ export default function Dashboard() {
     const loadHostGroups = async () => {
       setIsGroupLoading(true);
       try {
+        // Try to load the host's groups and pick the first one (if any) to display in the dashboard.
         const res = await getHostGroups(user.id);
         const groups = res?.groups || [];
         if (groups.length) {
+          // Populate the dashboard with the locked state + room code
           setIsLocked(!!groups[0]?.is_locked);
           const code = groups[0]?.code;
           if (code) {
@@ -166,8 +235,32 @@ export default function Dashboard() {
               </label>
             </div>
 
+            <div className="roster-tabs" role="tablist" aria-label="Roster tabs">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={rosterTab === 'users'}
+                className={`roster-tab ${rosterTab === 'users' ? 'active' : ''}`}
+                onClick={() => setRosterTab('users')}
+              >
+                Users ({players.length})
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={rosterTab === 'banned'}
+                className={`roster-tab ${rosterTab === 'banned' ? 'active' : ''}`}
+                onClick={() => {
+                  setRosterTab('banned');
+                  refreshBannedUsers();
+                }}
+              >
+                Banned ({bannedUsers.length})
+              </button>
+            </div>
+
             <div className="orientees-list">
-              {orientees.map((o) => {
+              {rosterTab === 'users' ? players.map((o) => {
                 const online = o.online !== false;
                 return (
                   <div key={o.id} className="orientees-item">
@@ -183,12 +276,73 @@ export default function Dashboard() {
                         <span className="status-text">{online ? 'Online' : 'Offline'}</span>
                       </div>
                     </div>
-                    <button className="actions-btn" type="button">
-                      •••
-                    </button>
+                    
+                    <Popover
+                      isOpen={isPopoverOpen}
+                      onClickOutside={() => setIsPopoverOpen(false)}
+                      positions={['right', 'top', 'bottom', 'left']}
+                      content={
+                      <div class="popover-content">
+                        <span className="orientees-name">{o.username || o.name || 'Player'}</span>
+                        <span className="join-time">Joined {formatJoinedAt(o.joinedAt)}</span>
+                         <button className="secondary-btn action-btn" type="button" onClick={() => {
+                          kickPlayer(o.id);
+                          setIsPopoverOpen(!isPopoverOpen)
+                          }}>
+                          Kick
+                        </button>
+                        <button className="secondary-btn action-btn" type="button" onClick={() => {
+                          banPlayer(o.id);
+                          setIsPopoverOpen(false);
+                        }}>
+                          Ban
+                        </button>
+                      </div>}
+                    >
+                      <button className="actions-btn" type="button" onClick={() => setIsPopoverOpen(!isPopoverOpen)}>
+                        •••
+                      </button>
+                    </Popover>
+                    
                   </div>
                 )
-              })}
+              }) : bannedUsers.length ? bannedUsers.map((banned) => (
+                <div key={banned.id} className="orientees-item">
+                  <img
+                    className="orientees-avatar"
+                    src={`https://placehold.co/100x100/f1f5f9/475569?text=${encodeURIComponent((banned.username || 'P').charAt(0).toUpperCase())}`}
+                    alt={`${banned.username || 'Player'} avatar`}
+                  />
+                  <div className="orientee-info">
+                    <span className="orientees-name">{banned.username || 'Player'}</span>
+                    <div className="orientees-status">
+                      <span className="status-dot offline" />
+                      <span className="status-text">Banned</span>
+                    </div>
+                  </div>
+
+                  <Popover
+                      isOpen={isPopoverOpen}
+                      onClickOutside={() => setIsPopoverOpen(false)}
+                      positions={['right', 'top', 'bottom', 'left']}
+                      content={
+                      <div class="popover-content">
+                        <span className="orientees-name">{banned.username || banned.name || 'Player'}</span>
+                         <button className="secondary-btn action-btn" type="button" onClick={() => {
+                            unbanPlayer(banned.id);
+                          }}>
+                          Unban
+                        </button>
+                      </div>}
+                    >
+                      <button className="actions-btn" type="button" onClick={() => setIsPopoverOpen(!isPopoverOpen)}>
+                        •••
+                      </button>
+                    </Popover>
+                </div>
+              )) : (
+                <div className="status-text">No banned users.</div>
+              )}
             </div>
           </div>
         </aside>
@@ -270,7 +424,7 @@ export default function Dashboard() {
               </div>
 
               <div className="group-stats-summary" style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', textAlign: 'center', marginBottom: '16px', fontSize: '14px' }}>
-                <strong>{orientees.length}</strong> Orientees total
+                <strong>{players.length}</strong> Orientees total
               </div>
 
               <div className="group-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

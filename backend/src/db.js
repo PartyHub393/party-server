@@ -29,6 +29,7 @@ const createUserTable = async () => {
       description TEXT,
       code VARCHAR(50) UNIQUE,
       is_locked BOOLEAN NOT NULL DEFAULT FALSE,
+      banned_users UUID[] NOT NULL DEFAULT '{}'::UUID[],
       created_by UUID REFERENCES users(id),
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
@@ -50,6 +51,10 @@ const createUserTable = async () => {
 
     await pool.query(
       "ALTER TABLE groups ADD COLUMN IF NOT EXISTS is_locked BOOLEAN NOT NULL DEFAULT FALSE"
+    );
+
+    await pool.query(
+      "ALTER TABLE groups ADD COLUMN IF NOT EXISTS banned_users UUID[] NOT NULL DEFAULT '{}'::UUID[]"
     );
 
     await pool.query(

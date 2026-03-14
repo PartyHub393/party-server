@@ -413,14 +413,22 @@ router.post('/api/groups/join', async (req, res) => {
 
     // Ensure the group exists; do NOT create it from the join endpoint.
     const existing = await client.query(
-      'SELECT id, code, name, description, created_by, created_at, is_locked FROM groups WHERE code = $1',
-      [code]
+      `SELECT id, code, name, description, created_by, created_at, is_locked,
+              ($2::uuid = ANY(COALESCE(banned_users, '{}'::uuid[]))) AS is_banned
+       FROM groups
+       WHERE code = $1`,
+      [code, userId]
     );
     const group = existing.rows[0];
 
     if (!group) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Group not found. Please get the code from the host.' });
+    }
+
+    if (group.is_banned) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ error: 'You have been banned from this lobby.' });
     }
 
     const userRes = await client.query('SELECT id, username FROM users WHERE id = $1', [userId]);

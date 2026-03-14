@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { joinGroup, getPlayerGroups } from '../../api';
 import { useSocket } from '../../useSocket';
@@ -11,8 +11,16 @@ export default function JoinSession() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { socket, connected } = useSocket();
+
+  useEffect(() => {
+    const message = location.state?.message;
+    if (message) {
+      setError(message);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -30,6 +38,8 @@ export default function JoinSession() {
           });
           return;
         }
+
+        localStorage.removeItem('joined_group_code');
 
         // If we have no stored room, try to load the first group from the server.
         if (user?.id) {
@@ -55,20 +65,13 @@ export default function JoinSession() {
   useEffect(() => {
     if (!connected) return;
 
-    const handleJoinSuccess = ({ roomCode, players }) => {
-      // Optionally react to real-time join confirmation (e.g., update UI)
-      // (currently we just keep the user in the waiting room)
-    };
-
     const handleJoinError = ({ message }) => {
       setError(message || 'Unable to join room');
     };
 
-    socket.on('join_success', handleJoinSuccess);
     socket.on('join_error', handleJoinError);
 
     return () => {
-      socket.off('join_success', handleJoinSuccess);
       socket.off('join_error', handleJoinError);
     };
   }, [connected, socket]);
@@ -117,7 +120,7 @@ export default function JoinSession() {
           <div className="logo-placeholder" style={{ fontSize: '32px', marginBottom: '12px' }}>🏫</div>
           <h1 style={{ fontSize: '24px', margin: '0 0 8px 0', color: 'var(--text-main)' }}>Welcome, Spartan!</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
-            Enter your 8-digit group code to join the orientation session.
+            Enter your group code to join the orientation session.
           </p>
         </div>
 
@@ -131,7 +134,7 @@ export default function JoinSession() {
           <div className="code-input-wrapper">
             <input
               type="text"
-              placeholder="CWRU-XXXX"
+              placeholder="Room Code Here"
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               maxLength={9}

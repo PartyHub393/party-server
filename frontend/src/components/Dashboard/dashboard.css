@@ -209,8 +209,6 @@ body {
 }
 
 
-
-
 /* Orientee List Items */
 .orientees-list {
   display: flex;
@@ -249,12 +247,48 @@ body {
   width: 100%;
 }
 
+.orientees-name {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text-main);
+  letter-spacing: 0.01em;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .orientees-list::-webkit-scrollbar {
   width: 6px;
 }
 .orientees-list::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 10px;
+}
+
+.roster-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.roster-tab {
+  flex: 1;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.roster-tab.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
 }
 
 /* --- Buttons & UI Elements --- */
@@ -389,3 +423,27 @@ body {
   }
 }
 
+
+/* --- Popover Content --- */
+.popover-content {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: var(--card-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px;
+}
+
+.join-time {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
