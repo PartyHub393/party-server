@@ -1,0 +1,152 @@
+/* TriviaHostPanel — inline host trivia controls for dashboard */
+
+.th-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: 'Inter', sans-serif;
+}
+
+.th-panel__stats {
+  display: flex;
+  gap: 12px;
+}
+
+.th-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  gap: 2px;
+}
+
+.th-stat__val {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--primary, #2563eb);
+}
+
+.th-stat__lbl {
+  font-size: 11px;
+  color: var(--text-muted, #475569);
+}
+
+.th-panel__error {
+  margin: 0;
+  padding: 10px 14px;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 12px;
+  color: #991b1b;
+  font-size: 13px;
+}
+
+.th-start,
+.th-question {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.th-start h4,
+.th-question__title {
+  margin: 0 0 8px;
+  color: var(--text-main, #1e293b);
+}
+
+.th-start p {
+  margin: 0 0 12px;
+  color: var(--text-muted, #475569);
+  font-size: 13px;
+}
+
+.th-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.th-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: var(--text-main, #1e293b);
+  font-size: 13px;
+}
+
+.th-option--correct {
+  border-color: #86efac;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.th-option__letter {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #e2e8f0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.th-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.th-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.th-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.th-btn:not(:disabled):hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.th-btn--primary {
+  background: var(--primary, #2563eb);
+  color: #fff;
+}
+
+.th-btn--secondary {
+  background: #f1f5f9;
+  color: var(--text-main, #1e293b);
+  border: 1px solid #e2e8f0;
+}
+
+@media (max-width: 640px) {
+  .th-options {
+    grid-template-columns: 1fr;
+  }
+
+  .th-actions {
+    flex-direction: column;
+  }
+}

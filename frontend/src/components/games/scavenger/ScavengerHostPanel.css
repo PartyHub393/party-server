@@ -1,0 +1,233 @@
+/* ScavengerHostPanel — inline review panel for the host dashboard */
+
+.sh-host-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ── Stats strip ── */
+.sh-host-panel__stats {
+  display: flex;
+  gap: 12px;
+}
+
+.sh-host-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  gap: 2px;
+}
+
+.sh-host-stat__val {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--primary, #2563eb);
+}
+
+.sh-host-stat__lbl {
+  font-size: 11px;
+  color: var(--text-muted, #475569);
+}
+
+.sh-host-panel__error {
+  margin: 0;
+  padding: 10px 14px;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 12px;
+  color: #991b1b;
+  font-size: 13px;
+}
+
+.sh-host-panel__empty {
+  margin: 0;
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted, #475569);
+  font-size: 14px;
+  background: #f8fafc;
+  border: 1px dashed #e2e8f0;
+  border-radius: 14px;
+}
+
+/* ── Section headings ── */
+.sh-host-section__title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted, #475569);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Submission card grid ── */
+.sh-host-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.sh-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: box-shadow 0.15s;
+}
+
+.sh-card:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,0.09);
+}
+
+.sh-card--approved {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.sh-card--denied {
+  border-color: #fca5a5;
+  background: #fff7f7;
+}
+
+.sh-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sh-card__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sh-card__uploader {
+  font-size: 11px;
+  color: var(--text-muted, #475569);
+}
+
+.sh-card__img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.sh-card__badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  align-self: flex-start;
+}
+
+.sh-card__badge--approved {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.sh-card__badge--denied {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.sh-card__comment {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted, #475569);
+  font-style: italic;
+}
+
+.sh-card__comment-input {
+  width: 100%;
+  padding: 8px 10px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--text-main, #1e293b);
+  caret-color: var(--text-main, #1e293b);
+  color-scheme: light;
+  -webkit-text-fill-color: var(--text-main, #1e293b);
+  resize: none;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.sh-card__comment-input::placeholder {
+  color: var(--text-muted, #64748b);
+  opacity: 1;
+}
+
+.sh-card__comment-input:focus {
+  border-color: var(--primary, #2563eb);
+}
+
+/* ── Action buttons ── */
+.sh-card__actions {
+  display: flex;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.sh-card__btn {
+  flex: 1;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.sh-card__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sh-card__btn:not(:disabled):hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.sh-card__btn--approve {
+  background: #16a34a;
+  color: #fff;
+}
+
+.sh-card__btn--deny {
+  background: #dc2626;
+  color: #fff;
+}
+
+.sh-card__btn--edit {
+  background: #f1f5f9;
+  color: var(--text-main, #1e293b);
+  border: 1px solid #e2e8f0;
+}
+
+.secondary-btn {
+    color: black;
+}

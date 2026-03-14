@@ -10,23 +10,95 @@ async function parseJson(res) {
   }
 }
 
-export async function createRoom() {
-  const res = await fetch(`${API_BASE}/api/rooms`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-  })
+export async function createRoom({ userId }) {
+  let res
+  try {
+    res = await fetch(`${API_BASE}/api/rooms`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
+    })
+  } catch (err) {
+    throw new Error('Cannot reach server. Is the backend running on port 3000?')
+  }
+
   const data = await parseJson(res)
   if (!res.ok) throw new Error(data?.error || 'Failed to create room')
-  return data?.roomCode
+  return data
 }
 
-export async function createAccount({ username, email, password }) {
+export async function getHostGroups(userId) {
+  let res
+  try {
+    res = await fetch(`${API_BASE}/api/host/groups?userId=${encodeURIComponent(userId)}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    })
+  } catch (err) {
+    throw new Error('Cannot reach server. Is the backend running on port 3000?')
+  }
+
+  const data = await parseJson(res)
+  if (!res.ok) throw new Error(data?.error || 'Failed to load host groups')
+  return data
+}
+
+export async function setGroupLock({ groupCode, userId, isLocked }) {
+  let res
+  try {
+    res = await fetch(`${API_BASE}/api/groups/lock`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ groupCode, userId, isLocked }),
+    })
+  } catch (err) {
+    throw new Error('Cannot reach server. Is the backend running on port 3000?')
+  }
+
+  const data = await parseJson(res)
+  if (!res.ok) throw new Error(data?.error || 'Failed to update lobby lock')
+  return data
+}
+
+export async function joinGroup({ groupCode, userId }) {
+  let res
+  try {
+    res = await fetch(`${API_BASE}/api/groups/join`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ groupCode, userId }),
+    })
+  } catch (err) {
+    throw new Error('Cannot reach server. Is the backend running on port 3000?')
+  }
+  const data = await parseJson(res)
+  if (!res.ok) throw new Error(data?.error || 'Failed to join group')
+  return data
+}
+
+export async function getPlayerGroups(userId) {
+  let res
+  try {
+    res = await fetch(`${API_BASE}/api/player/groups?userId=${encodeURIComponent(userId)}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    })
+  } catch (err) {
+    throw new Error('Cannot reach server. Is the backend running on port 3000?')
+  }
+
+  const data = await parseJson(res)
+  if (!res.ok) throw new Error(data?.error || 'Failed to load player groups')
+  return data
+}
+
+export async function createAccount({ username, email, password, role }) {
   let res
   try {
     res = await fetch(`${API_BASE}/api/createaccount`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password }),
+      body: JSON.stringify({ username, email, password, role }),
     })
   } catch (err) {
     throw new Error('Cannot reach server. Is the backend running on port 3000?')

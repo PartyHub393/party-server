@@ -1,0 +1,100 @@
+.waiting-room-view .dashboard-container {
+  display: flex;
+  gap: 20px;
+  padding: 24px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.waiting-room-view .sidebar {
+  width: 320px;
+  max-height: calc(100vh - 48px);
+  height: auto;
+}
+
+.waiting-room-view .main-content {
+  min-width: 0;
+}
+
+.waiting-room-view .sidebar-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.waiting-room-view .orientees-item {
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+
+.waiting-room-view .game-slot {
+  width: 100%;
+}
+
+.waiting-room-view .waiting-hint {
+  background: var(--glass-bg);
+  border: 1px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+}
+
+.waiting-room-view .waiting-hint-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.waiting-room-view .waiting-hint-subtitle {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+}
+
+@media (max-width: 1024px) {
+  .waiting-room-view .dashboard-container {
+    flex-direction: column;
+    padding: 18px;
+  }
+
+  .waiting-room-view .sidebar {
+    width: 100%;
+    max-height: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .waiting-room-view .dashboard-container {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .waiting-room-view .sidebar,
+  .waiting-room-view .main-content {
+    width: 100%;
+    border-radius: 16px;
+    padding: 16px;
+  }
+
+  .waiting-room-view .room-code {
+    font-size: 18px;
+    padding: 12px;
+    letter-spacing: 0.1em;
+  }
+
+  .waiting-room-view .orientees-list {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .waiting-room-view .waiting-hint {
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .waiting-room-view .waiting-hint-title {
+    font-size: 15px;
+  }
+}

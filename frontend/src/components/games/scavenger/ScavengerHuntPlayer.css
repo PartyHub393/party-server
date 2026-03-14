@@ -1,0 +1,255 @@
+/* ScavengerHuntPlayer — embedded in waiting-room, matches dashboard light theme */
+
+.sh-player {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: 'Inter', sans-serif;
+  color: var(--text-main, #1e293b);
+  width: 100%;
+}
+
+/* ── Stats bar ── */
+.sh-player__stats {
+  display: flex;
+  gap: 12px;
+}
+
+.sh-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 8px;
+  background: var(--glass-bg, rgba(255,255,255,0.95));
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  gap: 2px;
+}
+
+.sh-stat__value {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--primary, #2563eb);
+}
+
+.sh-stat__label {
+  font-size: 11px;
+  color: var(--text-muted, #475569);
+  text-align: center;
+}
+
+/* ── Error / loading ── */
+.sh-player__error {
+  margin: 0;
+  padding: 10px 14px;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 12px;
+  color: #991b1b;
+  font-size: 13px;
+}
+
+.sh-player__loading {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted, #475569);
+  font-size: 14px;
+}
+
+/* ── Category card ── */
+.sh-category {
+  background: var(--glass-bg, rgba(255,255,255,0.95));
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+
+.sh-category__header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #f8fafc;
+}
+
+.sh-category__name {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--primary, #2563eb);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sh-category__desc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted, #475569);
+}
+
+/* ── Challenge list ── */
+.sh-challenges {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sh-challenge {
+  padding: 14px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s;
+}
+
+.sh-challenge:last-child {
+  border-bottom: none;
+}
+
+.sh-challenge--approved {
+  background: #f0fdf4;
+}
+
+.sh-challenge--denied {
+  background: #fff7f7;
+}
+
+.sh-challenge__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.sh-challenge__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main, #1e293b);
+}
+
+.sh-challenge__pts {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary, #2563eb);
+  white-space: nowrap;
+}
+
+.sh-challenge__desc {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--text-muted, #475569);
+  line-height: 1.4;
+}
+
+/* ── Footer: badge + actions ── */
+.sh-challenge__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.sh-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.sh-badge--pending {
+  background: #fef9c3;
+  color: #854d0e;
+  border: 1px solid #fde68a;
+}
+
+.sh-badge--approved {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.sh-badge--denied {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.sh-challenge__comment {
+  font-size: 12px;
+  color: var(--text-muted, #475569);
+  font-style: italic;
+}
+
+/* ── Action buttons ── */
+.sh-challenge__actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.sh-upload-btn {
+  display: inline-block;
+  padding: 6px 14px;
+  background: var(--primary, #2563eb);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  white-space: nowrap;
+}
+
+.sh-upload-btn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.sh-upload-btn--loading {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.sh-cancel-btn {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sh-cancel-btn:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+.sh-cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Responsive ── */
+@media (max-width: 500px) {
+  .sh-player__stats {
+    gap: 8px;
+  }
+
+  .sh-stat__value {
+    font-size: 1rem;
+  }
+
+  .sh-challenge__actions {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .sh-upload-btn,
+  .sh-cancel-btn {
+    flex: 1;
+    text-align: center;
+  }
+}

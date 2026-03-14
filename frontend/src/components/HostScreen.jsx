@@ -1,16 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { createRoom as createRoomApi } from '../api'
+import { useAuth } from '../contexts/AuthContext'
 import { useSocket } from '../useSocket'
 import WelcomeBanner from './WelcomeBanner'
 import './HostScreen.css'
 
 export default function HostScreen() {
   const navigate = useNavigate()
+  const { user, isAuthenticated } = useAuth()
   const [players, setPlayers] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const { socket, connected, roomCode, setRoomCode} = useSocket()
+  const { socket, connected, roomCode, setRoomCode } = useSocket()
   const isStartingGame = useRef(false)
 
   useEffect(() => {
@@ -50,11 +52,23 @@ export default function HostScreen() {
   }, [socket, roomCode])
 
   async function handleCreateRoom() {
+    if (!isAuthenticated || user?.role !== 'host') {
+      setError('You must be logged in as a host to create a room.')
+      return
+    }
+
     setError(null)
     setLoading(true)
     try {
-      const code = await createRoomApi()
-      setRoomCode(code)
+      const { roomCode } = await createRoomApi({ userId: user.id })
+      if (roomCode) {
+        setRoomCode(roomCode)
+        try {
+          window.localStorage.setItem('host_room_code', roomCode)
+        } catch {
+          // ignore
+        }
+      }
     } catch (e) {
       setError('Failed to create room. Is the server running?')
     } finally {
@@ -75,10 +89,9 @@ export default function HostScreen() {
 
   const handleStartGame = () => {
     isStartingGame.current = true
-    navigate('/games')
+    navigate('/dashboard')
   }
 
-  console.log(connected, roomCode);
 
   return (
     <div className="host-screen">
