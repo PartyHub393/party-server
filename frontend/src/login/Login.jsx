@@ -18,7 +18,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/user-dashboard', { replace: true });
+      navigate('/join-group', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -49,7 +49,7 @@ export default function LoginPage() {
         loginUser(data.user);
 
         // Direct hosts to the host dashboard, other users to the join screen
-        const destination = data.user?.role === 'host' ? '/' : '/user-dashboard';
+        const destination = data.user?.role === 'host' ? '/' : '/join-group';
         navigate(destination, { replace: true });
       }
     } catch (err) {

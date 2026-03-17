@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSocket } from '../../useSocket';
 import { useAuth } from '../../contexts/AuthContext';
@@ -32,23 +32,6 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
   const navigate = useNavigate();
 
   const lastJoinedRoomRef = useRef(null);
-  const redirectingRef = useRef(false);
-
-  const redirectToUserDashboard = useCallback((message) => {
-    if (redirectingRef.current) return;
-    redirectingRef.current = true;
-
-    localStorage.removeItem('joined_group_code');
-    setRoomCode(null);
-    navigate('/user-dashboard', {
-      replace: true,
-      state: {
-        message: message || 'Unable to join room.',
-        skipAutoRedirect: true,
-        at: Date.now(),
-      },
-    });
-  }, [navigate, setRoomCode]);
 
   // Verify that the user is actually a member of the group before trying to join the socket room.
   useEffect(() => {
@@ -66,7 +49,8 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
         if (!canceled) {
           setValidGroup(isValid);
           if (!isValid) {
-            redirectToUserDashboard('You no longer have access to this lobby.');
+            localStorage.removeItem('joined_group_code');
+            navigate('/user-dashboard', { replace: true });
           }
         }
       } catch (err) {
@@ -80,7 +64,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
     return () => {
       canceled = true;
     };
-  }, [user?.id, effectiveRoomCode, redirectToUserDashboard]);
+  }, [user?.id, effectiveRoomCode, navigate]);
 
   useEffect(() => {
     if (!connected || !effectiveRoomCode) return;
@@ -94,7 +78,12 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
     };
 
     const handleJoinError = ({ message }) => {
-      redirectToUserDashboard(message || 'Unable to join room.');
+      localStorage.removeItem('joined_group_code');
+      setRoomCode(null);
+      navigate('/user-dashboard', {
+        replace: true,
+        state: { message: message || 'Unable to join room.' },
+      });
     };
 
     const handleGameStarted = ({ gameType }) => {
@@ -106,7 +95,12 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
     };
 
     const handleForcedLeave = ({ message }) => {
-      redirectToUserDashboard(message || 'You have been banned from the room.');
+      localStorage.removeItem('joined_group_code');
+      setRoomCode(null);
+      navigate('/user-dashboard', {
+        replace: true,
+        state: { message: message || 'You have been banned from the room.' },
+      });
     };
 
     socket.on('player_joined', handlePlayerJoined);
@@ -126,7 +120,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
       socket.off('kicked', handleForcedLeave);
       socket.off('banned', handleForcedLeave);
     };
-  }, [connected, socket, effectiveRoomCode, redirectToUserDashboard]);
+  }, [connected, socket, effectiveRoomCode, navigate, setRoomCode]);
 
   useEffect(() => {
     if (!connected) {
@@ -135,7 +129,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
     }
 
     if (!effectiveRoomCode) {
-      redirectToUserDashboard('No active room found.');
+      navigate('/dashboard', { replace: true });
       return;
     }
 
@@ -156,7 +150,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
 
     socket.emit('join_room', { roomCode: effectiveRoomCode, username });
     lastJoinedRoomRef.current = effectiveRoomCode;
-  }, [connected, socket, effectiveRoomCode, effectiveCurrentUser, user, validGroup, redirectToUserDashboard, setRoomCode]);
+  }, [connected, socket, effectiveRoomCode, effectiveCurrentUser, user, validGroup, navigate, setRoomCode]);
 
   const displayedRoomCode = effectiveRoomCode || 'No group selected';
   const displayedCurrentUser = effectiveCurrentUser;

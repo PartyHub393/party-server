@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getHostGroups, setGroupLock } from '../../api';
 import { useSocket } from '../../useSocket';
 import './dashboard.css';
-import Navbar from '../Navbar/navbar';
+import Navbar from '../Navbar/Navbar';
 import ScavengerHostPanel from '../games/scavenger/ScavengerHostPanel';
 import TriviaHostPanel from '../games/trivia/TriviaHostPanel';
 import { Popover } from 'react-tiny-popover'
@@ -101,7 +101,7 @@ export default function Dashboard() {
     if (!authLoaded) return;
 
     if (!isAuthenticated || user?.role !== 'host') {
-      navigate('/join', { replace: true });
+      navigate('/waiting-room', { replace: true });
       return;
     }
 

@@ -5,7 +5,7 @@ import { joinGroup, getPlayerGroups } from '../../api';
 import { useSocket } from '../../useSocket';
 import './dashboard.css';
 
-export default function JoinSession() {
+export default function JoinGroup() {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
