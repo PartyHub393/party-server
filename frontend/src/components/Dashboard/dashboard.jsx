@@ -100,7 +100,12 @@ export default function Dashboard() {
     // Only redirect once auth has loaded.
     if (!authLoaded) return;
 
-    if (!isAuthenticated || user?.role !== 'host') {
+    if(!isAuthenticated) {
+      navigate('/login', { replace: true });
+      return;
+    }
+    
+    if (user?.role !== 'host') {
       navigate('/waiting-room', { replace: true });
       return;
     }
