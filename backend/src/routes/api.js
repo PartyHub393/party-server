@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
-const { hash, compare } = require('bcrypt');
+const { createAuthRouter } = require('./auth');
+const { createGroupsRouter } = require('./groups');
+const bcrypt = require('bcrypt');
 const questions = require('../data/questions.json');
 const scavengerChallenges = require('../data/scavengerChallenges.json');
 
@@ -36,6 +38,9 @@ router.get('/db', async (req, res) => {
     res.status(500).json({ connected: false, error: err.message });
   }
 });
+
+// Auth routes (login + registration)
+router.use(createAuthRouter({ pool, bcrypt }));
 
 // --- Scavenger Hunt APIs ---
 
@@ -241,52 +246,12 @@ router.get('/api/player/groups', async (req, res) => {
   }
 });
 
-router.post('/api/rooms', async (req, res) => {
-  const { userId } = req.body;
-  if (!userId) {
-    return res.status(401).json({ error: 'Unauthorized: userId required.' });
-  }
-
-  try {
-    const userRes = await pool.query('SELECT id, role FROM users WHERE id = $1', [userId]);
-    if (userRes.rows.length === 0) {
-      return res.status(401).json({ error: 'Unauthorized: user not found.' });
-    }
-
-    const user = userRes.rows[0];
-    if (user.role !== 'host') {
-      return res.status(403).json({ error: 'Only hosts may create rooms.' });
-    }
-  } catch (err) {
-    console.error('Room creation auth error:', err);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-
-  // Generate a unique room code and persist it so it can be loaded later.
-  let roomCode;
-  let createdGroup = null;
-
-  // Keep trying until we create a group and insert it into DB without conflict.
-  while (!createdGroup) {
-    roomCode = generateGroupCode();
-    try {
-      const groupName = `Group ${roomCode}`;
-      const insertQuery = `
-        INSERT INTO groups (code, name, created_by, is_locked)
-        VALUES ($1, $2, $3, FALSE)
-        ON CONFLICT (code) DO NOTHING
-        RETURNING id, code, name, description, created_by, created_at, is_locked
-      `;
-      const insertRes = await pool.query(insertQuery, [roomCode, groupName, userId]);
-      createdGroup = insertRes.rows[0];
-    } catch (err) {
-      console.error('Error creating group in DB:', err);
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  }
-
-  res.json({ roomCode, group: createdGroup });
-});
+router.use(
+  createGroupsRouter({
+    pool,
+    generateGroupCode,
+  })
+);
 
 router.post('/api/groups/lock', async (req, res) => {
   const { groupCode, userId, isLocked } = req.body;
@@ -326,74 +291,6 @@ router.post('/api/groups/lock', async (req, res) => {
   }
 });
 
-router.post('/api/createaccount', async (req, res) => {
-  const { username, email, password, role } = req.body;
-
-  if (!username || !email || !password) {
-    return res.status(400).json({ error: 'Username, email, and password are required.' });
-  }
-
-  const resolvedRole = role === 'host' ? 'host' : 'player';
-
-  try {
-    const passwordHash = await hash(password, 10);
-    const queryText = `
-      INSERT INTO users (username, email, password_hash, role)
-      VALUES ($1, $2, $3, $4)
-      RETURNING id, username, email, role, created_at;
-    `;
-    const values = [username, email, passwordHash, resolvedRole];
-    const result = await pool.query(queryText, values);
-
-    res.status(201).json({
-      message: 'User created successfully',
-      user: result.rows[0]
-    });
-  } catch (err) {
-    if (err.code === '23505') {
-      return res.status(409).json({ error: 'Username or Email already exists.' });
-    }
-    console.error('Database Error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-router.post('/api/login', async (req, res) => {
-  try {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required.' });
-    }
-
-    const queryText = 'SELECT * FROM users WHERE username = $1';
-    const result = await pool.query(queryText, [username]);
-
-    if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid username or password.' });
-    }
-
-    const user = result.rows[0];
-    const isMatch = await compare(password, user.password_hash);
-
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid username or password.' });
-    }
-
-    res.status(200).json({
-      message: 'Login successful',
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role || 'player',
-      }
-    });
-  } catch (err) { 
-    console.error('Login error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 // Join or create a group via code. Stores membership in group_members.
 router.post('/api/groups/join', async (req, res) => {
