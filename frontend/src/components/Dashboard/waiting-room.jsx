@@ -8,7 +8,7 @@ import './waiting-room.css'
 
 export default function UserWaitingRoom({ roomCode, orientees: initialOrientees, currentUser }) {
   const { socket, connected, setRoomCode } = useSocket();
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const [orientees, setOrientees] = useState(initialOrientees || []);
   const [validGroup, setValidGroup] = useState(false);
   const [activeGame, setActiveGame] = useState(null);
@@ -50,7 +50,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
           setValidGroup(isValid);
           if (!isValid) {
             localStorage.removeItem('joined_group_code');
-            navigate('/user-dashboard', { replace: true });
+            navigate('/join-group', { replace: true });
           }
         }
       } catch (err) {
@@ -80,7 +80,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
     const handleJoinError = ({ message }) => {
       localStorage.removeItem('joined_group_code');
       setRoomCode(null);
-      navigate('/user-dashboard', {
+      navigate('/join-group', {
         replace: true,
         state: { message: message || 'Unable to join room.' },
       });
@@ -97,7 +97,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
     const handleForcedLeave = ({ message }) => {
       localStorage.removeItem('joined_group_code');
       setRoomCode(null);
-      navigate('/user-dashboard', {
+      navigate('/join-group', {
         replace: true,
         state: { message: message || 'You have been banned from the room.' },
       });

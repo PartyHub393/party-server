@@ -12,7 +12,7 @@ export default function JoinGroup() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, authLoaded } = useAuth();
   const { socket, connected } = useSocket();
 
   useEffect(() => {
@@ -23,8 +23,15 @@ export default function JoinGroup() {
   }, [location.state]);
 
   useEffect(() => {
+    if (!authLoaded) return;
+
     if (!isAuthenticated) {
       navigate('/login', { replace: true });
+      return;
+    }
+
+    if (user?.role === 'host') {
+      navigate('/dashboard', { replace: true });
       return;
     }
 
@@ -60,7 +67,7 @@ export default function JoinGroup() {
     };
 
     loadJoinedGroup();
-  }, [isAuthenticated, navigate, user]);
+  }, [authLoaded, isAuthenticated, navigate, user]);
 
   useEffect(() => {
     if (!connected) return;
