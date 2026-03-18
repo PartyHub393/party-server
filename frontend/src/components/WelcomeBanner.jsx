@@ -84,6 +84,7 @@ export default function WelcomeBanner({ variant = 'light' }) {
               cursor: 'pointer',
               color: '#0f172a'
             }}
+            className = "logout-btn"
           >
             Logout
           </button>
