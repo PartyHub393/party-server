@@ -208,7 +208,7 @@ function registerRoomHandlers(io, socket) {
     callback({ count: room.players.length });
   });
 
-  socket.on('disconnect', () => {
+  socket.on('disconnecting', () => {
     const roomsJoined = Array.from(socket.rooms).filter((r) => r !== socket.id);
     roomsJoined.forEach((code) => {
       removePlayerFromTrivia(code, socket.id);
