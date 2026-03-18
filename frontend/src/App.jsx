@@ -29,7 +29,7 @@ function App() {
         />
         <Route path="/join-group"
           element={
-            <ProtectedRoute allowedRoles={['player']}>
+            <ProtectedRoute allowedRoles={['player', 'host']}>
               <JoinGroup />
             </ProtectedRoute>
           }

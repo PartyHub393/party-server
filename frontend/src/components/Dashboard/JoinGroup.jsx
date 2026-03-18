@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { joinGroup, getPlayerGroups } from '../../api';
+import { joinGroup, getHostGroups, getPlayerGroups } from '../../api';
 import { useSocket } from '../../useSocket';
 import './dashboard.css';
 
@@ -30,13 +30,18 @@ export default function JoinGroup() {
       return;
     }
 
-    if (user?.role === 'host') {
-      navigate('/dashboard', { replace: true });
-      return;
-    }
-
     const loadJoinedGroup = async () => {
       try {
+        // If the user is a host, check if they have any groups before showing the join screen.
+        if (user?.role === 'host' && user?.id) {
+          const hostRes = await getHostGroups(user.id);
+          const hostGroups = hostRes?.groups || [];
+          if (hostGroups.length) {
+            navigate('/dashboard', { replace: true });
+            return;
+          }
+        }
+
         const savedCode = localStorage.getItem('joined_group_code');
         if (savedCode) {
           navigate('/waiting-room', {
@@ -107,10 +112,16 @@ export default function JoinGroup() {
         socket.emit('join_room', { roomCode: trimmed, username: result.member.username });
       }
 
+      if(user?.role === 'host') {
+        navigate('/dashboard', { replace: true });
+        return;
+      }
+
       navigate('/waiting-room', {
         replace: true,
         state: { groupCode: trimmed, group: result.group, member: result.member },
       });
+      return;
     } catch (err) {
       setError(err.message || 'Unable to join group');
     } finally {

@@ -49,8 +49,7 @@ export default function LoginPage() {
         loginUser(data.user);
 
         // Direct hosts to the host dashboard, other users to the join screen
-        const destination = data.user?.role === 'host' ? '/' : '/join-group';
-        navigate(destination, { replace: true });
+        navigate('/join-group', { replace: true });
       }
     } catch (err) {
       setError(err.message || (isSignUp ? 'Sign up failed' : 'Login failed'));
