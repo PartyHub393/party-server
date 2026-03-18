@@ -82,6 +82,7 @@ export default function WelcomeBanner({ variant = 'light' }) {
               padding: '10px 10px',
               borderRadius: 8,
               cursor: 'pointer',
+              color: '#0f172a'
             }}
           >
             Logout
