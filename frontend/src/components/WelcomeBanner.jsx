@@ -74,15 +74,7 @@ export default function WelcomeBanner({ variant = 'light' }) {
             type="button"
             role="menuitem"
             onClick={handleClick}
-            style={{
-              width: '100%',
-              textAlign: 'left',
-              background: 'transparent',
-              border: 'none',
-              padding: '10px 10px',
-              borderRadius: 8,
-              cursor: 'pointer',
-            }}
+            className = "logout-btn"
           >
             Logout
           </button>
