@@ -36,8 +36,8 @@ export default function Dashboard() {
   const [selectedGame, setSelectedGame] = useState(null);
   /** @type {'trivia' | 'scavenger' | null} */
   const [activeHostPanel, setActiveHostPanel] = useState(null);
-  /** @type {boolean} */
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  /** @type {string | null} */
+  const [activePopoverKey, setActivePopoverKey] = useState(null);
   /** @type {Array<{ id: string, username: string }>} */
   const [bannedUsers, setBannedUsers] = useState([]);
   /** @type {'users' | 'banned'} */
@@ -75,6 +75,10 @@ export default function Dashboard() {
       refreshBannedUsers();
     });
   }
+
+  const togglePopover = (key) => {
+    setActivePopoverKey((prev) => (prev === key ? null : key));
+  };
 
   const refreshBannedUsers = useCallback(() => {
     if (!connected || !hostRoomCode) return;
@@ -288,28 +292,28 @@ export default function Dashboard() {
                     </div>
                     
                     <Popover
-                      isOpen={isPopoverOpen}
-                      onClickOutside={() => setIsPopoverOpen(false)}
+                      isOpen={activePopoverKey === `user:${o.id}`}
+                      onClickOutside={() => setActivePopoverKey(null)}
                       positions={['right', 'top', 'bottom', 'left']}
                       content={
-                      <div class="popover-content">
+                      <div className="popover-content">
                         <span className="orientees-name">{o.username || o.name || 'Player'}</span>
                         <span className="join-time">Joined {formatJoinedAt(o.joinedAt)}</span>
                          <button className="secondary-btn action-btn" type="button" onClick={() => {
                           kickPlayer(o.id);
-                          setIsPopoverOpen(!isPopoverOpen)
+                          setActivePopoverKey(null)
                           }}>
                           Kick
                         </button>
                         <button className="secondary-btn action-btn" type="button" onClick={() => {
                           banPlayer(o.id);
-                          setIsPopoverOpen(false);
+                          setActivePopoverKey(null);
                         }}>
                           Ban
                         </button>
                       </div>}
                     >
-                      <button className="actions-btn" type="button" onClick={() => setIsPopoverOpen(!isPopoverOpen)}>
+                      <button className="actions-btn" type="button" onClick={() => togglePopover(`user:${o.id}`)}>
                         •••
                       </button>
                     </Popover>
@@ -332,20 +336,21 @@ export default function Dashboard() {
                   </div>
 
                   <Popover
-                      isOpen={isPopoverOpen}
-                      onClickOutside={() => setIsPopoverOpen(false)}
+                      isOpen={activePopoverKey === `banned:${banned.id}`}
+                      onClickOutside={() => setActivePopoverKey(null)}
                       positions={['right', 'top', 'bottom', 'left']}
                       content={
-                      <div class="popover-content">
+                      <div className="popover-content">
                         <span className="orientees-name">{banned.username || banned.name || 'Player'}</span>
                          <button className="secondary-btn action-btn" type="button" onClick={() => {
                             unbanPlayer(banned.id);
+                            setActivePopoverKey(null);
                           }}>
                           Unban
                         </button>
                       </div>}
                     >
-                      <button className="actions-btn" type="button" onClick={() => setIsPopoverOpen(!isPopoverOpen)}>
+                      <button className="actions-btn" type="button" onClick={() => togglePopover(`banned:${banned.id}`)}>
                         •••
                       </button>
                     </Popover>
