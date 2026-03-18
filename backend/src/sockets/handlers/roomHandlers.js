@@ -56,6 +56,19 @@ function registerRoomHandlers(io, socket) {
       return;
     }
 
+    let isHostUser = false;
+    try {
+      const userRes = await pool.query('SELECT role FROM users WHERE id = $1', [userId]);
+      if (userRes.rows.length === 0) {
+        socket.emit('join_error', { message: 'User not found.' });
+        return;
+      }
+      isHostUser = userRes.rows[0].role === 'host';
+    } catch (err) {
+      socket.emit('join_error', { message: 'Could not validate user.' });
+      return;
+    }
+
     let room = getRoom(code);
 
     if (!room) {
@@ -93,12 +106,14 @@ function registerRoomHandlers(io, socket) {
           }
         }
 
-        await pool.query(
-          `INSERT INTO group_members (group_id, user_id)
-            VALUES ($1, $2)
-            ON CONFLICT (group_id, user_id) DO NOTHING`,
-          [groupId, userId]
-        );
+        if (!isHostUser) {
+          await pool.query(
+            `INSERT INTO group_members (group_id, user_id)
+              VALUES ($1, $2)
+              ON CONFLICT (group_id, user_id) DO NOTHING`,
+            [groupId, userId]
+          );
+        }
 
         await createRoomWithCode(code);
         room = getRoom(code);
@@ -137,18 +152,26 @@ function registerRoomHandlers(io, socket) {
             }
           }
 
-          await pool.query(
-            `INSERT INTO group_members (group_id, user_id)
-             VALUES ($1, $2)
-             ON CONFLICT (group_id, user_id) DO NOTHING`,
-            [groupId, userId]
-          );
+          if (!isHostUser) {
+            await pool.query(
+              `INSERT INTO group_members (group_id, user_id)
+               VALUES ($1, $2)
+               ON CONFLICT (group_id, user_id) DO NOTHING`,
+              [groupId, userId]
+            );
+          }
         }
       } catch (err) {
         socket.emit('join_error', { message: 'Room not found. Check the code.' });
         console.warn('Failed to persist group membership to DB:', err);
         return;
       }
+    }
+
+    if (isHostUser) {
+      // Hosts should manage rooms via host_room and never join as player members.
+      socket.emit('join_success', { roomCode: code, players: getPlayers(code) || [] });
+      return;
     }
 
     const players = addPlayer(code, socket.id, username, { userId });

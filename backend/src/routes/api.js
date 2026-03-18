@@ -332,44 +332,72 @@ router.post('/api/groups/join', async (req, res) => {
         return res.status(404).json({ error: 'Group not found. Please get the code from the host.' });
     }
 
-    // Hosts can create a room from a typed code when it doesn't exist.
-    if (!group && user.role === 'host') {
-      const createdRes = await client.query(
-        `INSERT INTO groups (code, name, created_by, is_locked)
-         VALUES ($1, $2, $3, FALSE)
-         ON CONFLICT (code) DO NOTHING
-         RETURNING id, code, name, description, created_by, created_at, is_locked,
-                   FALSE AS is_banned`,
-        [code, `Group ${code}`, userId]
-      );
-
-      if (createdRes.rows.length === 0) {
+    if (user.role === 'host') {
+      // If host typed an existing code, they may only use it when they own that room.
+      if (group && group.created_by !== userId) {
         await client.query('ROLLBACK');
-        return res.status(409).json({ error: 'Group code already exists. Try joining again.' });
+        return res.status(403).json({ error: 'That group code belongs to another host.' });
       }
 
-      group = createdRes.rows[0];
-    }
+      // If host typed a new code, ensure they do not already own another room.
+      if (!group) {
+        const ownedRes = await client.query(
+          `SELECT id, code
+           FROM groups
+           WHERE created_by = $1
+           ORDER BY created_at DESC
+           LIMIT 1`,
+          [userId]
+        );
 
-    if(user.role !== 'host') {
-      if (group.is_banned) {
-        await client.query('ROLLBACK');
-        return res.status(403).json({ error: 'You have been banned from this lobby.' });
+        if (ownedRes.rows.length > 0) {
+          await client.query('ROLLBACK');
+          return res.status(409).json({ error: 'Host already has a group assigned.' });
+        }
+
+        const createdRes = await client.query(
+          `INSERT INTO groups (code, name, created_by, is_locked)
+           VALUES ($1, $2, $3, FALSE)
+           ON CONFLICT (code) DO NOTHING
+           RETURNING id, code, name, description, created_by, created_at, is_locked,
+                     FALSE AS is_banned`,
+          [code, `Group ${code}`, userId]
+        );
+
+        if (createdRes.rows.length === 0) {
+          await client.query('ROLLBACK');
+          return res.status(409).json({ error: 'Group code already exists. Try a different code.' });
+        }
+
+        group = createdRes.rows[0];
       }
-      
-      const membershipRes = await client.query(
-        'SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2',
+
+      // Hosts should not be listed as players in group_members.
+      await client.query(
+        'DELETE FROM group_members WHERE group_id = $1 AND user_id = $2',
         [group.id, userId]
       );
-      const isExistingMember = membershipRes.rows.length > 0;
 
-      if (group.is_locked && !isExistingMember) {
-        await client.query('ROLLBACK');
-        return res.status(403).json({ error: 'This lobby is locked. New members cannot join right now.' });
-      }
+      await client.query('COMMIT');
+      return res.json({ group, member: { id: user.id, username: user.username } });
+    }
+
+    if (group.is_banned) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ error: 'You have been banned from this lobby.' });
     }
     
+    const membershipRes = await client.query(
+      'SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2',
+      [group.id, userId]
+    );
+    const isExistingMember = membershipRes.rows.length > 0;
 
+    if (group.is_locked && !isExistingMember) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ error: 'This lobby is locked. New members cannot join right now.' });
+    }
+    
     // Ensure a valid group was found/created before adding membership.
     if (!group) {
       await client.query('ROLLBACK');
@@ -385,7 +413,7 @@ router.post('/api/groups/join', async (req, res) => {
 
     await client.query('COMMIT');
 
-    return res.json({ group, member: userRes.rows[0] });
+    return res.json({ group, member: { id: user.id, username: user.username } });
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Group join error:', err);
