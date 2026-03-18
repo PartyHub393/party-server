@@ -4,6 +4,7 @@ import { useSocket } from '../../useSocket';
 import { useAuth } from '../../contexts/AuthContext';
 import { getPlayerGroups } from '../../api';
 import GameSlot from '../games/GameSlot';
+import Navbar from '../Navbar/Navbar';
 import './waiting-room.css'
 
 export default function UserWaitingRoom({ roomCode, orientees: initialOrientees, currentUser }) {
@@ -158,7 +159,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
   return (
     <div className="dashboard-wrapper waiting-room-view">
       <div className="dashboard-bg" />
-      
+      <Navbar />
       <div className="dashboard-container">
         <aside className="sidebar">
           <div className="sidebar-section">
