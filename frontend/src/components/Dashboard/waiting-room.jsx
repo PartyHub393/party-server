@@ -108,7 +108,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
     socket.on('join_success', handleJoinSuccess);
     socket.on('join_error', handleJoinError);
     socket.on('game_started', handleGameStarted);
-    socket.on('trivia_ended', handleGameEnded);
+    socket.on('game_ended', handleGameEnded);
     socket.on('kicked', handleForcedLeave);
     socket.on('banned', handleForcedLeave);
 
@@ -117,7 +117,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
       socket.off('join_success', handleJoinSuccess);
       socket.off('join_error', handleJoinError);
       socket.off('game_started', handleGameStarted);
-      socket.off('trivia_ended', handleGameEnded);
+      socket.off('game_ended', handleGameEnded);
       socket.off('kicked', handleForcedLeave);
       socket.off('banned', handleForcedLeave);
     };

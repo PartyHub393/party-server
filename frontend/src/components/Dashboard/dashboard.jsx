@@ -43,6 +43,11 @@ export default function Dashboard() {
   /** @type {'users' | 'banned'} */
   const [rosterTab, setRosterTab] = useState('users');
 
+  const endGame = () => {
+    setActiveHostPanel(null);
+    socket.emit('end_game', { roomCode: hostRoomCode });
+  }
+
   const formatJoinedAt = (joinedAt) => {
     if (!joinedAt) return 'Unknown';
     const date = new Date(joinedAt);
@@ -482,7 +487,7 @@ export default function Dashboard() {
                     type="button"
                     className="secondary-btn"
                     style={{ fontSize: '13px' }}
-                    onClick={() => setActiveHostPanel(null)}
+                    onClick={endGame}
                   >
                     End Session
                   </button>

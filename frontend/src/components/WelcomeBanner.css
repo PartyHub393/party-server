@@ -10,3 +10,14 @@
 }
 .welcome-banner.light { color: rgba(255, 255, 255, 0.95); }
 .welcome-banner.dark { color: #4b5563; text-shadow: none; }
+
+.logout-btn {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 10px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #4b5563;
+}
