@@ -6,7 +6,7 @@ import './Login.css';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login: loginUser, isAuthenticated } = useAuth();
+  const { login: loginUser, isAuthenticated, authLoaded } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const isFormDisabled = loading || !authLoaded;
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -82,6 +83,7 @@ export default function LoginPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Enter username"
+              disabled={isFormDisabled}
               required
             />
           </div>
@@ -96,6 +98,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
+                  disabled={isFormDisabled}
                   required
                 />
               </div>
@@ -106,6 +109,7 @@ export default function LoginPage() {
                   type="checkbox"
                   checked={isHost}
                   onChange={(e) => setIsHost(e.target.checked)}
+                  disabled={isFormDisabled}
                 />
                 <label htmlFor="role-host" style={{ fontSize: '14px', margin: 0 }}>
                   Create account as host
@@ -122,11 +126,12 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              disabled={isFormDisabled}
               required
             />
           </div>
 
-          <button type="submit" className="primary-btn" disabled={loading} style={{ padding: '14px', marginTop: '10px' }}>
+          <button type="submit" className="primary-btn" disabled={isFormDisabled} style={{ padding: '14px', marginTop: '10px' }}>
             {loading ? 'Processing...' : isSignUp ? 'Create Account' : 'Sign In'}
           </button>
         </form>
@@ -134,7 +139,7 @@ export default function LoginPage() {
         <div style={{ textAlign: 'center', marginTop: '24px' }}>
           <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-            <button onClick={switchMode} className="text-link-btn">
+            <button onClick={switchMode} className="text-link-btn" disabled={isFormDisabled}>
               {isSignUp ? 'Log in' : 'Sign up'}
             </button>
           </p>
