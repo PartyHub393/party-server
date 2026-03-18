@@ -8,11 +8,13 @@ export default function TriviaHostPanel({ socket, roomCode, connected, onEnd }) 
   const [questionData, setQuestionData] = useState(null);
   const [questionNumber, setQuestionNumber] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
+  const [questionLimit, setQuestionLimit] = useState(TOTAL_QUESTIONS);
+  const [timeLimit, setTimeLimit] = useState(30); //Way to set the time limit and the # of questions
   const [answeredCount, setAnsweredCount] = useState(0);
   const [playerCount, setPlayerCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
+  
   const canStart = !!socket && !!roomCode && connected;
 
   useEffect(() => {
@@ -53,8 +55,8 @@ export default function TriviaHostPanel({ socket, roomCode, connected, onEnd }) 
   }, [socket, roomCode, questionData, timeLeft]);
 
   const progressLabel = useMemo(() => {
-    if (!questionNumber) return `0 / ${TOTAL_QUESTIONS}`;
-    return `${questionNumber} / ${TOTAL_QUESTIONS}`;
+    if (!questionNumber) return `0 / ${questionLimit}`;
+    return `${questionNumber} / ${questionLimit}`;
   }, [questionNumber]);
 
   const refreshPlayerCount = () => {
@@ -70,6 +72,8 @@ export default function TriviaHostPanel({ socket, roomCode, connected, onEnd }) 
       roomCode,
       question: data.question,
       options: data.options,
+      questionLimit,
+      timeLimit,
     });
   };
 
@@ -83,7 +87,7 @@ export default function TriviaHostPanel({ socket, roomCode, connected, onEnd }) 
       setQuestionData(data);
       setQuestionNumber(1);
       setAnsweredCount(0);
-      setTimeLeft(30);
+      setTimeLeft(timeLimit);
       broadcastQuestion(data);
     } catch (err) {
       setError(err?.message || 'Failed to start trivia');
@@ -95,7 +99,7 @@ export default function TriviaHostPanel({ socket, roomCode, connected, onEnd }) 
   const handleNextQuestion = async () => {
     if (!canStart || !questionData) return;
 
-    if (questionNumber >= TOTAL_QUESTIONS) {
+    if (questionNumber >= questionLimit) {
       socket.emit('end_trivia', { roomCode });
       onEnd?.();
       return;
@@ -109,7 +113,7 @@ export default function TriviaHostPanel({ socket, roomCode, connected, onEnd }) 
       setQuestionData(data);
       setQuestionNumber((prev) => prev + 1);
       setAnsweredCount(0);
-      setTimeLeft(30);
+      setTimeLeft(timeLimit);
       broadcastQuestion(data);
     } catch (err) {
       setError(err?.message || 'Failed to fetch next question');
@@ -140,6 +144,14 @@ export default function TriviaHostPanel({ socket, roomCode, connected, onEnd }) 
       {!questionData ? (
         <div className="th-start">
           <h4>CWRU Trivia</h4>
+          <label className="th-label">
+            <span className="th-label__text">Number of Questions:</span>
+          <input className="th-input" type="number" value={questionLimit} onChange={(e) => setQuestionLimit(Math.max(1,Number(e.target.value)))} />
+          </label>
+          <label className="th-label">
+            <span className="th-label__text">Time Limit:</span>
+          <input className="th-input" type="number" value={timeLimit} onChange={(e) => setTimeLimit(Math.max(5,Number(e.target.value)))} />
+          </label>
           <p>Start the round when your players are ready.</p>
           <button
             type="button"
@@ -174,7 +186,7 @@ export default function TriviaHostPanel({ socket, roomCode, connected, onEnd }) 
               onClick={handleNextQuestion}
               disabled={loading || timeLeft > 0}
             >
-              {loading ? 'Loading…' : questionNumber >= TOTAL_QUESTIONS ? 'End Trivia' : 'Next Question'}
+              {loading ? 'Loading…' : questionNumber >= questionLimit ? 'End Trivia' : 'Next Question'}
             </button>
             <button
               type="button"

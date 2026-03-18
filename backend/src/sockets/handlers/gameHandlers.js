@@ -40,7 +40,7 @@ function registerGameHandlers(io, socket) {
     socket.to(code).emit('game_started', { roomCode: code, gameType: game });
   });
 
-  socket.on('broadcast_question', ({ roomCode, question, options }) => {
+  socket.on('broadcast_question', ({ roomCode, question, options, timeLimit, questionLimit }) => {
     const code = normalizeCode(roomCode);
     const room = getRoom(code);
 

@@ -40,7 +40,7 @@ export default function useTriviaGame({ username: initialUsername } = {}) {
       setSelected(null)
       setAnswerRevealed(false)
       setRevealAnswer(null)
-      setTimeLeft(30)
+      setTimeLeft(payload.timeLimit ?? 30)
       setStatus('')
     }
 
