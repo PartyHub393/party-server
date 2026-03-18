@@ -48,10 +48,6 @@ export default function useTriviaGame({ username: initialUsername } = {}) {
       setStatus(message || '')
     }
 
-    const handleTriviaEnded = () => {
-      // waiting-room.jsx handles clearing the game slot via its own trivia_ended listener
-    }
-
     const handleAnswerRevealed = ({ correctAnswer, playerResults }) => {
       setAnswerRevealed(true)
       setRevealAnswer(correctAnswer)
@@ -75,14 +71,12 @@ export default function useTriviaGame({ username: initialUsername } = {}) {
     socket.on('trivia_feedback', handleTriviaFeedback)
     socket.on('answer_revealed', handleAnswerRevealed)
     socket.on('player_answered', handlePlayerAnswered)
-    socket.on('trivia_ended', handleTriviaEnded)
 
     return () => {
       socket.off('new_question', handleNewQuestion)
       socket.off('trivia_feedback', handleTriviaFeedback)
       socket.off('answer_revealed', handleAnswerRevealed)
       socket.off('player_answered', handlePlayerAnswered)
-      socket.off('trivia_ended', handleTriviaEnded)
     }
   }, [socket])
 

@@ -117,7 +117,7 @@ function registerGameHandlers(io, socket) {
     }
   });
 
-  socket.on('end_trivia', ({ roomCode }) => {
+  socket.on('end_game', ({ roomCode }) => {
     const code = normalizeCode(roomCode);
     const room = getRoom(code);
 
@@ -127,7 +127,7 @@ function registerGameHandlers(io, socket) {
     }
 
     const finalStats = endTriviaGame(code);
-    io.to(code).emit('trivia_ended', { finalStats });
+    io.to(code).emit('game_ended', { finalStats });
   });
 }
 

@@ -100,7 +100,7 @@ export default function TriviaHostPanel({ socket, roomCode, connected, onEnd }) 
     if (!canStart || !questionData) return;
 
     if (questionNumber >= questionLimit) {
-      socket.emit('end_trivia', { roomCode });
+      socket.emit('end_game', { roomCode });
       onEnd?.();
       return;
     }
@@ -187,16 +187,6 @@ export default function TriviaHostPanel({ socket, roomCode, connected, onEnd }) 
               disabled={loading || timeLeft > 0}
             >
               {loading ? 'Loading…' : questionNumber >= questionLimit ? 'End Trivia' : 'Next Question'}
-            </button>
-            <button
-              type="button"
-              className="th-btn th-btn--secondary"
-              onClick={() => {
-                socket?.emit('end_trivia', { roomCode });
-                onEnd?.();
-              }}
-            >
-              End Now
             </button>
           </div>
         </div>
