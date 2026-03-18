@@ -22,10 +22,6 @@ vi.mock('../../src/components/games/scavenger/ScavengerHostPanel', () => ({
   default: () => <div>ScavengerHostPanel</div>,
 }));
 
-vi.mock('../../src/components/games/trivia/TriviaHostPanel', () => ({
-  default: () => <div>TriviaHostPanel</div>,
-}));
-
 vi.mock('../../src/api', () => ({
   getHostGroups: vi.fn(),
   setGroupLock: vi.fn(),
@@ -52,6 +48,7 @@ describe('Dashboard', () => {
     });
 
     vi.mocked(useNavigate).mockReturnValue(mockNavigateFn);
+    vi.mocked(getHostGroups).mockResolvedValue({ groups: [] });
   });
 
   it('Redirects unauthenticated users to /login', () => {
@@ -78,14 +75,22 @@ describe('Dashboard', () => {
     expect(mockNavigateFn).toHaveBeenCalledWith('/waiting-room', { replace: true });
   });
 
-  it('Allows authenticated host users to render', () => {
+  it('Allows authenticated host users to navigate to the dashboard', async () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { id: '456', role: 'host' },
       isAuthenticated: true,
       authLoaded: true,
     });
 
+    vi.mocked(getHostGroups).mockResolvedValue({
+      groups: [{ code: 'ROOM456', is_locked: false }],
+    });
+
     render(<Dashboard />);
+
+    await waitFor(() => {
+      expect(getHostGroups).toHaveBeenCalledWith('456');
+    });
 
     // Should NOT redirect for host users
     expect(mockNavigateFn).not.toHaveBeenCalled();
