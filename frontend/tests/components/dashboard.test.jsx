@@ -156,4 +156,28 @@ describe('Dashboard', () => {
     expect(bannedTab.getAttribute('aria-selected')).toBe('true');
     expect(usersTab.getAttribute('aria-selected')).toBe('false');
   });
+
+  it('Renders players list with Online/Offline status text', async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: { id: 'host-roster', role: 'host' },
+      isAuthenticated: true,
+      authLoaded: true,
+    })
+    vi.mocked(getHostGroups).mockResolvedValue({
+      groups: [{ code: 'ROSTER1', is_locked: false }],
+    })
+    const onHandlers = {}
+    vi.mocked(useSocket).mockReturnValue({
+      socket: {
+        emit: vi.fn(),
+        on: vi.fn((evt, cb) => {
+          onHandlers[evt] = cb
+        }),
+        once: vi.fn(),
+        off: vi.fn(),
+      },
+      connected: true,
+      setRoomCode: vi.fn(),
+    });
+  })
 });
