@@ -1,62 +1,60 @@
 const { pool } = require('./db')
-
-/** @type {Map<string, { hostId: string | null, players: Array<{ id: string, username: string, joinedAt?: string }> }>} */
-const rooms = new Map()
+const {
+  normalizeRoomCode,
+  getRoomByCode,
+  setRoomByCode,
+  hasRoom,
+  deleteRoomByCode,
+} = require('./roomStore')
+const {
+  buildRoomAssignments,
+  assignPlayerGroupInRoom,
+  clearAssignmentsInRoom,
+  setAssignmentScoreInRoom,
+  getAssignmentScoresFromRoom,
+  deleteAssignmentGroupInRoom,
+  autoAssignPlayersInRoom,
+} = require('./roomAssignments')
+const {
+  resolveGroupByCode,
+  loadRoomSnapshot,
+} = require('./roomPersistence')
 
 async function createRoomWithCode(code, { hostSocketId, hostUserId } = {}) {
-  const normalized = (code || '').toUpperCase();
+  const normalized = normalizeRoomCode(code);
   if (!normalized) return null;
 
-  // Validate that the group exists in the DB and (optionally) is owned by the expected host.
-  let groupId = null;
-
+  let groupMeta = null;
   try {
-    const res = await pool.query(
-      'SELECT id, created_by FROM groups WHERE code = $1',
-      [normalized]
-    );
-    if (res.rows.length === 0) return null;
+    groupMeta = await resolveGroupByCode(pool, normalized);
+    if (!groupMeta) return null;
 
-    groupId = res.rows[0].id;
-    const createdBy = res.rows[0].created_by;
-    if (hostUserId && createdBy !== hostUserId) return null;
+    if (hostUserId && groupMeta.createdBy !== hostUserId) return null;
   } catch (err) {
     return null;
   }
 
-  if (!rooms.has(normalized)) {
-    const players = [];
-
-    // Preload existing group members from the database so the room can be rebuilt after restarts.
+  if (!hasRoom(normalized)) {
     try {
-      const membersRes = await pool.query(
-        `SELECT u.id as user_id, u.username, gm.joined_at
-         FROM group_members gm
-         JOIN users u ON u.id = gm.user_id
-         WHERE gm.group_id = $1`,
-        [groupId]
-      );
-
-      for (const row of membersRes.rows) {
-        players.push({
-          id: row.user_id,
-          userId: row.user_id,
-          socketId: null,
-          username: row.username || 'Player',
-          joinedAt: row.joined_at ? new Date(row.joined_at).toISOString() : null,
-          online: false,
-        });
-      }
+      const snapshot = await loadRoomSnapshot(pool, groupMeta.groupId);
+      setRoomByCode(normalized, {
+        hostId: null,
+        players: snapshot.players,
+        assignmentScores: snapshot.assignmentScores,
+      });
     } catch (err) {
       // If member preload fails, we still create the room; it will populate as users join.
       console.warn('Failed to preload room members from DB:', err);
+      setRoomByCode(normalized, {
+        hostId: null,
+        players: [],
+        assignmentScores: {},
+      });
     }
-
-    rooms.set(normalized, { hostId: null, players });
   }
 
   if (hostSocketId) {
-    const room = rooms.get(normalized);
+    const room = getRoomByCode(normalized);
     if (room) {
       room.hostId = hostSocketId;
     }
@@ -66,16 +64,16 @@ async function createRoomWithCode(code, { hostSocketId, hostUserId } = {}) {
 }
 
 function getRoom(code) {
-  return rooms.get((code || '').toUpperCase())
+  return getRoomByCode(code)
 }
 
 function setHost(roomCode, socketId) {
-  const room = rooms.get(roomCode)
+  const room = getRoomByCode(roomCode)
   if (room) room.hostId = socketId
 }
 
 function addPlayer(roomCode, socketId, username, { userId } = {}) {
-  const room = rooms.get(roomCode)
+  const room = getRoomByCode(roomCode)
   if (!room) return null
 
   const normalizedName = (username || '').trim() || 'Player'
@@ -109,6 +107,7 @@ function addPlayer(roomCode, socketId, username, { userId } = {}) {
       username: normalizedName,
       joinedAt: new Date().toISOString(),
       online: true,
+      assignedGroup: null,
     }
     room.players.push(player)
   }
@@ -117,7 +116,7 @@ function addPlayer(roomCode, socketId, username, { userId } = {}) {
 }
 
 function removePlayer(roomCode, socketId) {
-  const room = rooms.get(roomCode)
+  const room = getRoomByCode(roomCode)
   if (!room) return null
 
   const player = room.players.find((p) => p.socketId === socketId)
@@ -129,7 +128,7 @@ function removePlayer(roomCode, socketId) {
 }
 
 function removePlayerPermanently(roomCode, playerId) {
-  const room = rooms.get(roomCode)
+  const room = getRoomByCode(roomCode)
   if (!room) return null
 
   const before = room.players.length
@@ -140,15 +139,50 @@ function removePlayerPermanently(roomCode, playerId) {
 }
 
 function getPlayers(roomCode) {
-  const room = rooms.get(roomCode)
+  const room = getRoomByCode(roomCode)
   return room ? room.players : []
 }
 
-function removeRoom(roomCode) {
-  const code = (roomCode || '').toUpperCase();
+function assignPlayerToGroup(roomCode, playerId, assignedGroup) {
+  const room = getRoomByCode(roomCode);
+  return assignPlayerGroupInRoom(room, playerId, assignedGroup);
+}
 
-  if (rooms.has(code)) {
-    rooms.delete(code);
+function clearRoomAssignments(roomCode) {
+  const room = getRoomByCode(roomCode);
+  return clearAssignmentsInRoom(room);
+}
+
+function getRoomAssignments(roomCode) {
+  const room = getRoomByCode(roomCode);
+  if (!room) return {};
+  return buildRoomAssignments(room.players);
+}
+
+function setRoomAssignmentScore(roomCode, assignmentName, score) {
+  const room = getRoomByCode(roomCode);
+  return setAssignmentScoreInRoom(room, assignmentName, score);
+}
+
+function getRoomAssignmentScores(roomCode) {
+  const room = getRoomByCode(roomCode);
+  return getAssignmentScoresFromRoom(room);
+}
+
+function deleteAssignmentGroup(roomCode, assignmentName) {
+  const room = getRoomByCode(roomCode);
+  return deleteAssignmentGroupInRoom(room, assignmentName);
+}
+
+function autoAssignPlayersToGroups(roomCode, targetSize = 5) {
+  const room = getRoomByCode(roomCode);
+  return autoAssignPlayersInRoom(room, targetSize);
+}
+
+function removeRoom(roomCode) {
+  const code = normalizeRoomCode(roomCode);
+
+  if (deleteRoomByCode(code)) {
     console.log(`Room ${code} deleted.`);
     return true;
   }
@@ -163,5 +197,12 @@ module.exports = {
   removePlayer,
   removePlayerPermanently,
   getPlayers,
-  removeRoom
+  removeRoom,
+  assignPlayerToGroup,
+  clearRoomAssignments,
+  getRoomAssignments,
+  setRoomAssignmentScore,
+  getRoomAssignmentScores,
+  deleteAssignmentGroup,
+  autoAssignPlayersToGroups,
 }

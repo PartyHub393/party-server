@@ -9,6 +9,7 @@ export default function JoinGroup() {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [checkingRedirect, setCheckingRedirect] = useState(true);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,63 +31,87 @@ export default function JoinGroup() {
       return;
     }
 
+    let canceled = false;
+
     const loadJoinedGroup = async () => {
+      setCheckingRedirect(true);
       try {
         // If the user is a host, check if they have any groups before showing the join screen.
         if (user?.role === 'host' && user?.id) {
           const hostRes = await getHostGroups(user.id);
           const hostGroups = hostRes?.groups || [];
-          if (hostGroups.length) {
+          if (!canceled && hostGroups.length) {
+            const hostCode = hostGroups[0]?.code;
+            if (hostCode) {
+              try {
+                localStorage.setItem('host_room_code', hostCode);
+              } catch {
+                // ignore storage issues
+              }
+            }
             navigate('/dashboard', { replace: true });
             return;
           }
         }
 
-        const savedCode = localStorage.getItem('joined_group_code');
-        if (savedCode) {
+        const savedCode = (localStorage.getItem('joined_group_code') || '').trim().toUpperCase();
+
+        // If we have no stored room, try to load the first group from the server.
+        if (user?.id) {
+          const res = await getPlayerGroups(user.id);
+          const groups = res?.groups || [];
+
+          const playerCodes = groups
+            .map((g) => (g?.code || '').trim().toUpperCase())
+            .filter(Boolean);
+
+          let redirectCode = null;
+          if (savedCode && playerCodes.includes(savedCode)) {
+            redirectCode = savedCode;
+          } else if (playerCodes.length) {
+            redirectCode = playerCodes[0];
+          }
+
+          if (!canceled && redirectCode) {
+            localStorage.setItem('joined_group_code', redirectCode);
+            navigate('/waiting-room', {
+              replace: true,
+              state: { groupCode: redirectCode, member: { id: user.id, username: user.username } },
+            });
+            return;
+          }
+
+          if (!redirectCode && savedCode) {
+            localStorage.removeItem('joined_group_code');
+          }
+        } else if (savedCode && !canceled) {
           navigate('/waiting-room', {
             replace: true,
             state: { groupCode: savedCode, member: { id: user?.id, username: user?.username } },
           });
           return;
         }
-
-        localStorage.removeItem('joined_group_code');
-
-        // If we have no stored room, try to load the first group from the server.
-        if (user?.id) {
-          const res = await getPlayerGroups(user.id);
-          const groups = res?.groups || [];
-          if (groups.length) {
-            const code = groups[0].code;
-            localStorage.setItem('joined_group_code', code);
-            navigate('/waiting-room', {
-              replace: true,
-              state: { groupCode: code, member: { id: user.id, username: user.username } },
-            });
-          }
-        }
       } catch (err) {
-        // ignore, user can still join manually
+        // Fall back to saved local group code if available.
+        const savedCode = (localStorage.getItem('joined_group_code') || '').trim().toUpperCase();
+        if (!canceled && savedCode) {
+          navigate('/waiting-room', {
+            replace: true,
+            state: { groupCode: savedCode, member: { id: user?.id, username: user?.username } },
+          });
+          return;
+        }
+      } finally {
+        if (!canceled) setCheckingRedirect(false);
       }
     };
 
     loadJoinedGroup();
-  }, [authLoaded, isAuthenticated, navigate, user]);
-
-  useEffect(() => {
-    if (!connected) return;
-
-    const handleJoinError = ({ message }) => {
-      setError(message || 'Unable to join room');
-    };
-
-    socket.on('join_error', handleJoinError);
 
     return () => {
-      socket.off('join_error', handleJoinError);
+      canceled = true;
     };
-  }, [connected, socket]);
+  }, [authLoaded, isAuthenticated, navigate, user?.id, user?.role, user?.username]);
 
   const handleJoin = async (e) => {
     e.preventDefault();
@@ -107,15 +132,17 @@ export default function JoinGroup() {
     try {
       const result = await joinGroup({ groupCode: trimmed, userId: user.id });
 
-      // Signal presence to the live socket room for the host dashboard.
       if (connected) {
-        socket.emit('join_room', { roomCode: trimmed, username: result.member.username });
+        socket.emit('join_room', { roomCode: trimmed, username: result?.member?.username || user.username || 'Player' });
       }
 
       if(user?.role === 'host') {
+        localStorage.setItem('host_room_code', trimmed);
         navigate('/dashboard', { replace: true });
         return;
       }
+
+      localStorage.setItem('joined_group_code', trimmed);
 
       navigate('/waiting-room', {
         replace: true,

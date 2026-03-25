@@ -41,6 +41,23 @@ const createUserTable = async () => {
       role VARCHAR(20) DEFAULT 'member',
       PRIMARY KEY (group_id, user_id)
     );
+
+    CREATE TABLE IF NOT EXISTS room_assignment_groups (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+      name VARCHAR(100) NOT NULL,
+      score INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (group_id, name)
+    );
+
+    CREATE TABLE IF NOT EXISTS room_assignment_members (
+      group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+      assignment_group_id UUID NOT NULL REFERENCES room_assignment_groups(id) ON DELETE CASCADE,
+      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      assigned_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (group_id, user_id)
+    );
   `;
   try {
     await pool.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
@@ -59,6 +76,20 @@ const createUserTable = async () => {
 
     await pool.query(
       "ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'player'"
+    );
+
+    await pool.query(
+      'ALTER TABLE room_assignment_groups ADD COLUMN IF NOT EXISTS score INTEGER NOT NULL DEFAULT 0'
+    );
+
+    await pool.query(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_room_assignment_groups_group_name
+       ON room_assignment_groups (group_id, name)`
+    );
+
+    await pool.query(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_room_assignment_members_group_user
+       ON room_assignment_members (group_id, user_id)`
     );
 
     console.log("Group and users table is ready.");

@@ -11,6 +11,8 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
   const { socket, connected, setRoomCode } = useSocket();
   const { user } = useAuth();
   const [orientees, setOrientees] = useState(initialOrientees || []);
+  const [assignmentScores, setAssignmentScores] = useState({});
+  const [roomTab, setRoomTab] = useState('teammates');
   const [validGroup, setValidGroup] = useState(false);
   const [activeGame, setActiveGame] = useState(null);
   const location = useLocation();
@@ -70,12 +72,33 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
   useEffect(() => {
     if (!connected || !effectiveRoomCode) return;
 
-    const handlePlayerJoined = ({ players }) => {
-      setOrientees(players || []);
+    const applyRoomSnapshot = ({ players = [], assignments = {}, scores = {} }) => {
+      const playerIdToGroup = {};
+      Object.entries(assignments || {}).forEach(([groupName, ids]) => {
+        (ids || []).forEach((id) => {
+          playerIdToGroup[id] = groupName;
+        });
+      });
+
+      setOrientees(
+        (players || []).map((p) => ({
+          ...p,
+          assignedGroup: p.assignedGroup || playerIdToGroup[p.id] || null,
+        }))
+      );
+      setAssignmentScores(scores || {});
     };
 
-    const handleJoinSuccess = ({ players }) => {
-      setOrientees(players || []);
+    const handlePlayerJoined = ({ players, assignments, assignmentScores: scores }) => {
+      applyRoomSnapshot({ players, assignments, scores: scores || {} });
+    };
+
+    const handleJoinSuccess = ({ players, assignments, assignmentScores: scores }) => {
+      applyRoomSnapshot({ players, assignments, scores: scores || {} });
+    };
+
+    const handleAssignmentsUpdated = ({ players, assignments, assignmentScores: scores }) => {
+      applyRoomSnapshot({ players, assignments, scores: scores || {} });
     };
 
     const handleJoinError = ({ message }) => {
@@ -111,6 +134,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
     socket.on('game_ended', handleGameEnded);
     socket.on('kicked', handleForcedLeave);
     socket.on('banned', handleForcedLeave);
+    socket.on('group_assignments_updated', handleAssignmentsUpdated);
 
     return () => {
       socket.off('player_joined', handlePlayerJoined);
@@ -120,6 +144,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
       socket.off('game_ended', handleGameEnded);
       socket.off('kicked', handleForcedLeave);
       socket.off('banned', handleForcedLeave);
+      socket.off('group_assignments_updated', handleAssignmentsUpdated);
     };
   }, [connected, socket, effectiveRoomCode, navigate, setRoomCode]);
 
@@ -155,6 +180,16 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
 
   const displayedRoomCode = effectiveRoomCode || 'No group selected';
   const displayedCurrentUser = effectiveCurrentUser;
+  const myTeamName = useMemo(() => {
+    const myUserId = user?.id || displayedCurrentUser?.id;
+    if (!myUserId) return null;
+
+    const me = orientees.find(
+      (entry) => entry.userId === myUserId || entry.id === myUserId
+    );
+
+    return me?.assignedGroup || null;
+  }, [orientees, user?.id, displayedCurrentUser?.id]);
 
   return (
     <div className="dashboard-wrapper waiting-room-view">
@@ -168,35 +203,75 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
           </div>
 
       <div className="sidebar-section">
-        <span className="sidebar-section-title">Teammates</span>
+        <div className="roster-tabs" role="tablist" aria-label="Waiting room tabs" style={{ marginTop: '8px' }}>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={roomTab === 'teammates'}
+            className={`roster-tab ${roomTab === 'teammates' ? 'active' : ''}`}
+            onClick={() => setRoomTab('teammates')}
+          >
+            Teammates
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={roomTab === 'scores'}
+            className={`roster-tab ${roomTab === 'scores' ? 'active' : ''}`}
+            onClick={() => setRoomTab('scores')}
+          >
+            Scores
+          </button>
+        </div>
         <div className="orientees-list">
-          {orientees.length === 0 ? (
-            <div style={{ color: 'var(--text-muted)' }}>No teammates yet.</div>
-          ) : (
-            orientees.map((o) => {
-              const isMe = o.id === displayedCurrentUser.id;
-              const displayName = o.username || o.name || 'Player';
-              const online = o.online !== false;
-              return (
-                <div key={o.id} className={`orientees-item ${isMe ? 'is-me' : ''}`}>
-                  <img
-                    className="orientees-avatar"
-                    src={o.avatarUrl || `https://placehold.co/100x100/e2e8f0/475569?text=${encodeURIComponent((displayName || 'P').charAt(0).toUpperCase())}`}
-                    alt=""
-                  />
-                  <div className="orientee-info">
-                    <span className="orientees-name">
-                      {isMe ? 'You' : displayName}
-                      {isMe && displayName ? ` (${displayName})` : ''}
-                    </span>
-                    <div className="orientees-status" style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span className={`status-dot ${online ? '' : 'offline'}`} />
-                      <span className="status-text">{online ? 'Online' : 'Offline'}</span>
+          {roomTab === 'teammates' ? (
+            orientees.length === 0 ? (
+              <div style={{ color: 'var(--text-muted)' }}>No teammates yet.</div>
+            ) : (
+              orientees.map((o) => {
+                const isMe = o.id === displayedCurrentUser.id;
+                const displayName = o.username || o.name || 'Player';
+                const online = o.online !== false;
+                return (
+                  <div key={o.id} className={`orientees-item ${isMe ? 'is-me' : ''}`}>
+                    <img
+                      className="orientees-avatar"
+                      src={o.avatarUrl || `https://placehold.co/100x100/e2e8f0/475569?text=${encodeURIComponent((displayName || 'P').charAt(0).toUpperCase())}`}
+                      alt=""
+                    />
+                    <div className="orientee-info">
+                      <span className="orientees-name">
+                        {isMe ? 'You' : displayName}
+                        {isMe && displayName ? ` (${displayName})` : ''}
+                      </span>
+                      {o.assignedGroup ? <span className="assignment-chip">{o.assignedGroup}</span> : null}
+                      <div className="orientees-status" style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className={`status-dot ${online ? '' : 'offline'}`} />
+                        <span className="status-text">{online ? 'Online' : 'Offline'}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
-            })
+                )
+              })
+            )
+          ) : (
+            Object.keys(assignmentScores || {}).length === 0 ? (
+              <div style={{ color: 'var(--text-muted)' }}>No assignment scores yet.</div>
+            ) : (
+              Object.entries(assignmentScores)
+                .sort((a, b) => a[0].localeCompare(b[0]))
+                .map(([groupName, score]) => (
+                  <div key={groupName} className={`orientees-item ${myTeamName === groupName ? 'is-my-team' : ''}`}>
+                    <div className="orientee-info" style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span className="orientees-name">
+                        {groupName}
+                        {myTeamName === groupName ? ' (Your Team)' : ''}
+                      </span>
+                      <span className="assignment-score">{score}</span>
+                    </div>
+                  </div>
+                ))
+            )
           )}
         </div>
       </div>

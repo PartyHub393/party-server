@@ -18,6 +18,10 @@
   color: #003071;
 }
 
+.nav-logo-link {
+  text-decoration: none;
+}
+
 .nav-links {
   display: flex;
   gap: 2rem;

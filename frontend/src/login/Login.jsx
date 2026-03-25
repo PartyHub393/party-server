@@ -18,10 +18,9 @@ export default function LoginPage() {
   const isFormDisabled = loading || !authLoaded;
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/join-group', { replace: true });
-    }
-  }, [isAuthenticated, navigate]);
+    if (!authLoaded || !isAuthenticated) return;
+    navigate('/join-group', { replace: true });
+  }, [authLoaded, isAuthenticated, navigate]);
 
   const switchMode = () => {
     setIsSignUp((prev) => !prev);
@@ -48,8 +47,6 @@ export default function LoginPage() {
       } else {
         const data = await loginApi({ username: username.trim(), password });
         loginUser(data.user);
-
-        // Direct hosts to the host dashboard, other users to the join screen
         navigate('/join-group', { replace: true });
       }
     } catch (err) {

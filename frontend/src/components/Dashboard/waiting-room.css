@@ -1,19 +1,41 @@
+.waiting-room-view.dashboard-wrapper {
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 .waiting-room-view .dashboard-container {
   display: flex;
   gap: 20px;
   padding: 24px;
-  min-height: 100vh;
+  flex: 1;
+  min-height: 0;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .waiting-room-view .sidebar {
   width: 320px;
-  max-height: calc(100vh - 48px);
-  height: auto;
+  max-height: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.waiting-room-view .sidebar-section {
+  min-height: 0;
+}
+
+.waiting-room-view .orientees-list {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .waiting-room-view .main-content {
   min-width: 0;
+  min-height: 0;
+  overflow: auto;
 }
 
 .waiting-room-view .sidebar-section-title {
@@ -24,9 +46,53 @@
   letter-spacing: 0.04em;
 }
 
+.waiting-room-view .roster-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.waiting-room-view .roster-tab {
+  flex: 1;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.waiting-room-view .roster-tab.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
 .waiting-room-view .orientees-item {
   padding: 8px 10px;
   border-radius: 12px;
+}
+
+.waiting-room-view .orientees-item.is-my-team {
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.08), rgba(219, 234, 254, 0.45));
+}
+
+.waiting-room-view .assignment-chip {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1d4ed8;
+  background: #dbeafe;
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-top: 4px;
+}
+
+.waiting-room-view .assignment-score {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
 }
 
 .waiting-room-view .game-slot {
@@ -56,11 +122,17 @@
   .waiting-room-view .dashboard-container {
     flex-direction: column;
     padding: 18px;
+    overflow: auto;
   }
 
   .waiting-room-view .sidebar {
     width: 100%;
     max-height: none;
+    height: auto;
+  }
+
+  .waiting-room-view .main-content {
+    overflow: visible;
   }
 }
 
@@ -84,8 +156,9 @@
   }
 
   .waiting-room-view .orientees-list {
-    max-height: none;
-    overflow: visible;
+    max-height: 42vh;
+    overflow-y: auto;
+    overflow-x: hidden;
     padding-right: 0;
   }
 

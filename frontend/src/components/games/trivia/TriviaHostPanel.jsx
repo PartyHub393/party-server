@@ -31,6 +31,24 @@ export default function TriviaHostPanel({ socket, roomCode, connected, onEnd }) 
   }, [socket]);
 
   useEffect(() => {
+    if (!socket) return;
+
+    const syncOnlineCount = ({ players }) => {
+      const online = (players || []).filter((p) => p.online !== false).length;
+      setPlayerCount(online);
+      setAnsweredCount((prev) => Math.min(prev, online));
+    };
+
+    socket.on('player_joined', syncOnlineCount);
+    socket.on('player_left', syncOnlineCount);
+
+    return () => {
+      socket.off('player_joined', syncOnlineCount);
+      socket.off('player_left', syncOnlineCount);
+    };
+  }, [socket]);
+
+  useEffect(() => {
     if (playerCount > 0 && answeredCount >= playerCount) {
       setTimeLeft(0);
     }

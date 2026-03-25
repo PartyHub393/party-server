@@ -5,6 +5,7 @@ import LoginPage from './login/Login'
 import Dashboard from './components/Dashboard/dashboard'
 import  JoinGroup from './components/Dashboard/JoinGroup'
 import UserWaitingRoom from './components/Dashboard/waiting-room'
+import HostGames from './components/Dashboard/HostGames'
 
 function App() {
   return (
@@ -38,6 +39,13 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['player']}>
               <UserWaitingRoom />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/host-games"
+          element={
+            <ProtectedRoute allowedRoles={['host']}>
+              <HostGames />
             </ProtectedRoute>
           }
         />

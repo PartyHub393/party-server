@@ -1,12 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getHostGroups, setGroupLock } from '../../api';
 import { useSocket } from '../../useSocket';
 import './dashboard.css';
 import Navbar from '../Navbar/Navbar';
-import ScavengerHostPanel from '../games/scavenger/ScavengerHostPanel';
-import TriviaHostPanel from '../games/trivia/TriviaHostPanel';
 import { Popover } from 'react-tiny-popover'
 
 export default function Dashboard() {
@@ -32,21 +30,21 @@ export default function Dashboard() {
   const [isGroupLoading, setIsGroupLoading] = useState(false);
   /** @type {boolean} */
   const [isLockSaving, setIsLockSaving] = useState(false);
-  /** @type {'trivia' | 'scavenger' | null} */
-  const [selectedGame, setSelectedGame] = useState(null);
-  /** @type {'trivia' | 'scavenger' | null} */
-  const [activeHostPanel, setActiveHostPanel] = useState(null);
   /** @type {string | null} */
   const [activePopoverKey, setActivePopoverKey] = useState(null);
   /** @type {Array<{ id: string, username: string }>} */
   const [bannedUsers, setBannedUsers] = useState([]);
   /** @type {'users' | 'banned'} */
   const [rosterTab, setRosterTab] = useState('users');
-
-  const endGame = () => {
-    setActiveHostPanel(null);
-    socket.emit('end_game', { roomCode: hostRoomCode });
-  }
+  /** @type {'assignments' | 'scores'} */
+  const [groupPanelTab, setGroupPanelTab] = useState('assignments');
+  const [targetSize, setTargetSize] = useState(5);
+  /** @type {Record<string, number>} */
+  const [assignmentScores, setAssignmentScores] = useState({});
+  /** @type {Record<string, string>} */
+  const [assignmentDraftByPlayer, setAssignmentDraftByPlayer] = useState({});
+  /** @type {Record<string, string>} */
+  const [scoreDraftByGroup, setScoreDraftByGroup] = useState({});
 
   const formatJoinedAt = (joinedAt) => {
     if (!joinedAt) return 'Unknown';
@@ -80,6 +78,80 @@ export default function Dashboard() {
     setActivePopoverKey((prev) => (prev === key ? null : key));
   };
 
+  const mergePlayersWithAssignments = useCallback((nextPlayers = [], nextAssignments = {}) => {
+    const playerIdToGroup = {};
+    Object.entries(nextAssignments || {}).forEach(([groupName, playerIds]) => {
+      (playerIds || []).forEach((id) => {
+        playerIdToGroup[id] = groupName;
+      });
+    });
+
+    return nextPlayers.map((player) => ({
+      ...player,
+      assignedGroup: player.assignedGroup || playerIdToGroup[player.id] || null,
+    }));
+  }, []);
+
+  const groupedPlayers = useMemo(() => {
+    /** @type {Record<string, Array<any>>} */
+    const grouped = {};
+    players.forEach((player) => {
+      const groupName = (player.assignedGroup || '').trim();
+      if (!groupName) return;
+      if (!grouped[groupName]) grouped[groupName] = [];
+      grouped[groupName].push(player);
+    });
+    return grouped;
+  }, [players]);
+
+  const assignmentGroupNames = useMemo(() => {
+    const names = new Set([
+      ...Object.keys(groupedPlayers),
+      ...Object.keys(assignmentScores || {}),
+    ]);
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [groupedPlayers, assignmentScores]);
+
+  const assignPlayer = (playerId) => {
+    const nextGroupName = (assignmentDraftByPlayer[playerId] || '').trim();
+    socket.emit('assign_player_group', {
+      roomCode: hostRoomCode,
+      playerId,
+      groupName: nextGroupName,
+    });
+    setActivePopoverKey(null);
+  };
+
+  const clearAssignments = () => {
+    socket.emit('clear_group_assignments', { roomCode: hostRoomCode });
+  };
+
+  const saveGroupScore = (groupName) => {
+    const draftValue = scoreDraftByGroup[groupName];
+    const parsed = Number(draftValue);
+    const score = Number.isFinite(parsed) ? Math.trunc(parsed) : 0;
+
+    socket.emit('set_assignment_score', {
+      roomCode: hostRoomCode,
+      groupName,
+      score,
+    });
+  };
+
+  const deleteGroup = (groupName) => {
+    socket.emit('delete_assignment_group', {
+      roomCode: hostRoomCode,
+      groupName,
+    });
+  };
+
+  const autoAssignMembers = () => {
+    socket.emit('auto_assign_members', {
+      roomCode: hostRoomCode,
+      targetSize,
+    });
+  };
+
   const refreshBannedUsers = useCallback(() => {
     if (!connected || !hostRoomCode) return;
 
@@ -87,21 +159,6 @@ export default function Dashboard() {
       setBannedUsers(nextBannedUsers || []);
     });
   }, [connected, hostRoomCode, socket]);
-
-  // Handle when game is starting
-  const startGame = () => {
-    if (!selectedGame || !hostRoomCode) return;
-    if (selectedGame === 'trivia') {
-      // Start the game for the trivia session
-      socket.emit('host_started', { roomCode: hostRoomCode, gameType: 'trivia' });
-      setActiveHostPanel('trivia');
-    } else if (selectedGame === 'scavenger') {
-
-      // Start the game for the scavenger hunt
-      socket.emit('host_started', { roomCode: hostRoomCode, gameType: 'scavenger' });
-      setActiveHostPanel('scavenger');
-    }
-  };
 
   const displayedRoomCode = hostRoomCode;
 
@@ -126,20 +183,52 @@ export default function Dashboard() {
     }
 
     // Host joined and room is ready
-    const handleHostJoined = ({ players: initialPlayers }) => {
-      setPlayers(initialPlayers || []);
+    const applyRoomSnapshot = ({ nextPlayers, nextAssignments, nextScores }) => {
+      setPlayers(mergePlayersWithAssignments(nextPlayers || [], nextAssignments || {}));
+      setAssignmentScores(nextScores || {});
+      setScoreDraftByGroup((prev) => {
+        const next = { ...prev };
+        Object.entries(nextScores || {}).forEach(([groupName, score]) => {
+          next[groupName] = String(score ?? 0);
+        });
+        return next;
+      });
+    };
+
+    const handleHostJoined = ({ players: initialPlayers, assignments, assignmentScores: nextScores }) => {
+      applyRoomSnapshot({
+        nextPlayers: initialPlayers || [],
+        nextAssignments: assignments || {},
+        nextScores: nextScores || {},
+      });
       refreshBannedUsers();
       setError('');
     };
 
     // Update player list when someone joins
-    const handlePlayerJoined = ({ players: nextPlayers }) => {
-      setPlayers(nextPlayers || []);
+    const handlePlayerJoined = ({ players: nextPlayers, assignments, assignmentScores: nextScores }) => {
+      applyRoomSnapshot({
+        nextPlayers: nextPlayers || [],
+        nextAssignments: assignments || {},
+        nextScores: nextScores || {},
+      });
     };
 
-    const handlePlayerLeft = ({ players: nextPlayers }) => {
-      setPlayers(nextPlayers || []);
+    const handlePlayerLeft = ({ players: nextPlayers, assignments, assignmentScores: nextScores }) => {
+      applyRoomSnapshot({
+        nextPlayers: nextPlayers || [],
+        nextAssignments: assignments || {},
+        nextScores: nextScores || {},
+      });
       refreshBannedUsers();
+    };
+
+    const handleAssignmentsUpdated = ({ players: nextPlayers, assignments, assignmentScores: nextScores }) => {
+      applyRoomSnapshot({
+        nextPlayers: nextPlayers || [],
+        nextAssignments: assignments || {},
+        nextScores: nextScores || {},
+      });
     };
 
     // Handle errors related to hosting/joining
@@ -152,6 +241,7 @@ export default function Dashboard() {
     socket.on('player_joined', handlePlayerJoined);
     socket.on('host_error', handleHostError);
     socket.on('player_left', handlePlayerLeft);
+    socket.on('group_assignments_updated', handleAssignmentsUpdated);
 
     return () => {
       // Clean up listeners when component unmounts
@@ -159,8 +249,9 @@ export default function Dashboard() {
       socket.off('player_joined', handlePlayerJoined);
       socket.off('host_error', handleHostError);
       socket.off('player_left', handlePlayerLeft);
+      socket.off('group_assignments_updated', handleAssignmentsUpdated);
     };
-  }, [socket, connected, hostRoomCode, isAuthenticated, user, navigate, refreshBannedUsers, setRoomCode]);
+  }, [socket, connected, hostRoomCode, isAuthenticated, user, navigate, refreshBannedUsers, setRoomCode, mergePlayersWithAssignments]);
 
 
   // Authenticated host: load their groups and set up the dashboard
@@ -285,6 +376,7 @@ export default function Dashboard() {
                     />
                     <div className="orientee-info">
                       <span className="orientees-name">{o.username || o.name || 'Player'}</span>
+                      {o.assignedGroup ? <span className="assignment-chip">{o.assignedGroup}</span> : null}
                       <div className="orientees-status">
                         <span className={`status-dot ${online ? '' : 'offline'}`} />
                         <span className="status-text">{online ? 'Online' : 'Offline'}</span>
@@ -299,6 +391,24 @@ export default function Dashboard() {
                       <div className="popover-content">
                         <span className="orientees-name">{o.username || o.name || 'Player'}</span>
                         <span className="join-time">Joined {formatJoinedAt(o.joinedAt)}</span>
+                        <label className="assignment-label" htmlFor={`assign-${o.id}`}>Assignment Group</label>
+                        <input
+                          id={`assign-${o.id}`}
+                          type="text"
+                          className="assignment-input"
+                          placeholder="Example: Team A"
+                          value={assignmentDraftByPlayer[o.id] ?? (o.assignedGroup || '')}
+                          onChange={(e) => {
+                            setAssignmentDraftByPlayer((prev) => ({ ...prev, [o.id]: e.target.value }));
+                          }}
+                        />
+                        <button
+                          className="secondary-btn action-btn"
+                          type="button"
+                          onClick={() => assignPlayer(o.id)}
+                        >
+                          Save Assignment
+                        </button>
                          <button className="secondary-btn action-btn" type="button" onClick={() => {
                           kickPlayer(o.id);
                           setActivePopoverKey(null)
@@ -364,67 +474,6 @@ export default function Dashboard() {
 
         <main className="main-content">
           <section className="row-section">
-            <div className="card game-selection">
-              <h2 className="card-title">Game Selection</h2>
-              <div className="row-inner">
-                <div
-                  className={`game-card ${selectedGame === 'trivia' ? 'selected' : ''}`}
-                  onClick={() => setSelectedGame('trivia')}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') setSelectedGame('trivia')
-                  }}
-                >
-                  <div className="game-card__header trivia">
-                    <h3>CWRU Trivia</h3>
-                    <p>Test your knowledge about campus history and fun facts.</p>
-                  </div>
-                  <div className="game-card__body">
-                    <ul className="game-features">
-                      <li>Multiple choice questions</li>
-                      <li>Learn campus facts & history</li>
-                      <li>Beat your high score</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div
-                  className={`game-card ${selectedGame === 'scavenger' ? 'selected' : ''}`}
-                  onClick={() => setSelectedGame('scavenger')}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') setSelectedGame('scavenger')
-                  }}
-                >
-                  <div className="game-card__header scavenger">
-                    <h3>Scavenger Hunt</h3>
-                    <p>Explore campus and complete photo challenges with your team.</p>
-                  </div>
-                  <div className="game-card__body">
-                    <ul className="game-features">
-                      <li>Upload photos for each challenge</li>
-                      <li>Earn points for your team</li>
-                      <li>Compete on the leaderboard</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: '18px', textAlign: 'center' }}>
-                <button
-                  type="button"
-                  className="primary-btn"
-                  onClick={startGame}
-                  disabled={!selectedGame}
-                  style={{ width: '100%', maxWidth: '300px' }}
-                >
-                  Start Next Game
-                </button>
-              </div>
-            </div>
-
             <div className="card group-status">
               <div className="card-header-flex" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <h2 className="card-title" style={{ margin: 0 }}>Group Management</h2>
@@ -432,87 +481,120 @@ export default function Dashboard() {
                   <span>Target Size:</span>
                   <input 
                     type="number" 
-                    defaultValue={5} 
+                    value={targetSize}
+                    min={1}
+                    onChange={(e) => {
+                      const next = Number(e.target.value);
+                      setTargetSize(Number.isFinite(next) && next > 0 ? Math.trunc(next) : 1);
+                    }}
                     style={{ width: '50px', padding: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
                   />
                 </div>
               </div>
 
               <div className="group-stats-summary" style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', textAlign: 'center', marginBottom: '16px', fontSize: '14px' }}>
-                <strong>{players.length}</strong> Orientees total
+                <strong>{players.length}</strong> Orientees total • <strong>{assignmentGroupNames.length}</strong> Assignment groups
+              </div>
+
+              <div className="roster-tabs" role="tablist" aria-label="Group management tabs" style={{ marginBottom: '12px' }}>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={groupPanelTab === 'assignments'}
+                  className={`roster-tab ${groupPanelTab === 'assignments' ? 'active' : ''}`}
+                  onClick={() => setGroupPanelTab('assignments')}
+                >
+                  Assignments
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={groupPanelTab === 'scores'}
+                  className={`roster-tab ${groupPanelTab === 'scores' ? 'active' : ''}`}
+                  onClick={() => setGroupPanelTab('scores')}
+                >
+                  Scores
+                </button>
               </div>
 
               <div className="group-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {/* Example Group 1: Full */}
-                <div className="group-item" style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: 600 }}>Group 1</span>
-                    <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '10px', background: '#dcfce7', color: '#166534', fontWeight: 700 }}>5 / 5 Full</span>
-                  </div>
-                  <div style={{ height: '6px', width: '100%', background: '#e2e8f0', borderRadius: '3px' }}>
-                    <div style={{ height: '100%', width: '100%', background: '#16a34a', borderRadius: '3px' }}></div>
-                  </div>
-                </div>
+                {assignmentGroupNames.length === 0 ? (
+                  <div className="status-text">No assignment groups yet. Assign players from the user popover.</div>
+                ) : groupPanelTab === 'assignments' ? assignmentGroupNames.map((groupName) => {
+                  const memberCount = groupedPlayers[groupName]?.length || 0;
+                  const targetSize = 5;
+                  const fillPct = Math.min(100, Math.round((memberCount / targetSize) * 100));
+                  const statusLabel = memberCount >= targetSize ? 'Full' : memberCount > 0 ? 'Partial' : 'Empty';
 
-                {/* Example Group 2: Partial */}
-                <div className="group-item" style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: 600 }}>Group 2</span>
-                    <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '10px', background: '#fef9c3', color: '#854d0e', fontWeight: 700 }}>3 / 5 Partial</span>
+                  return (
+                    <div key={groupName} className="group-item" style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '10px' }}>
+                        <span style={{ fontWeight: 600 }}>{groupName}</span>
+                        <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '10px', background: '#f1f5f9', color: '#334155', fontWeight: 700 }}>
+                          {memberCount} / {targetSize} {statusLabel}
+                        </span>
+                      </div>
+
+                      <div style={{ height: '6px', width: '100%', background: '#e2e8f0', borderRadius: '3px', marginBottom: '8px' }}>
+                        <div style={{ height: '100%', width: `${fillPct}%`, background: '#2563eb', borderRadius: '3px' }} />
+                      </div>
+
+                      <div className="group-score-row">
+                        <button
+                          type="button"
+                          className="secondary-btn danger-outline-btn"
+                          onClick={() => deleteGroup(groupName)}
+                        >
+                          Delete Team
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }) : assignmentGroupNames.map((groupName) => (
+                  <div key={groupName} className="group-item" style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '10px' }}>
+                      <span style={{ fontWeight: 600 }}>{groupName}</span>
+                      <span style={{ fontSize: '12px', color: '#475569' }}>
+                        Members: {groupedPlayers[groupName]?.length || 0}
+                      </span>
+                    </div>
+                    <div className="group-score-row">
+                      <span className="status-text">Score</span>
+                      <input
+                        type="number"
+                        className="group-score-input"
+                        value={scoreDraftByGroup[groupName] ?? String(assignmentScores[groupName] ?? 0)}
+                        onChange={(e) => {
+                          setScoreDraftByGroup((prev) => ({ ...prev, [groupName]: e.target.value }));
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="secondary-btn"
+                        onClick={() => saveGroupScore(groupName)}
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        className="secondary-btn danger-outline-btn"
+                        onClick={() => deleteGroup(groupName)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ height: '6px', width: '100%', background: '#e2e8f0', borderRadius: '3px' }}>
-                    <div style={{ height: '100%', width: '60%', background: '#2563eb', borderRadius: '3px' }}></div>
-                  </div>
-                </div>
+                ))}
               </div>
 
               <div className="group-actions" style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                <button type="button" className="primary-btn" style={{ flex: 2 }}>
-                  Auto-Balance
+                <button type="button" className="primary-btn" style={{ flex: 2 }} onClick={autoAssignMembers}>
+                  Auto-Assign Members
                 </button>
-                <button type="button" className="secondary-btn" style={{ flex: 1 }}>
-                  Export
+                <button type="button" className="secondary-btn" style={{ flex: 1 }} onClick={clearAssignments}>
+                  Clear
                 </button>
               </div>
-            </div>
-          </section>
-
-          <section className="row-section">
-            <div className="card moderation-queue">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h2 className="card-title" style={{ margin: 0 }}>
-                  {activeHostPanel === 'scavenger'
-                    ? 'Scavenger Hunt — Submissions'
-                    : activeHostPanel === 'trivia'
-                      ? 'CWRU Trivia — Host Controls'
-                      : 'Moderation Panel'}
-                </h2>
-                {activeHostPanel && (
-                  <button
-                    type="button"
-                    className="secondary-btn"
-                    style={{ fontSize: '13px' }}
-                    onClick={endGame}
-                  >
-                    End Session
-                  </button>
-                )}
-              </div>
-
-              {activeHostPanel === 'scavenger' ? (
-                <ScavengerHostPanel />
-              ) : activeHostPanel === 'trivia' ? (
-                <TriviaHostPanel
-                  socket={socket}
-                  roomCode={hostRoomCode}
-                  connected={connected}
-                  onEnd={() => setActiveHostPanel(null)}
-                />
-              ) : (
-                <div style={{ padding: '20px', border: '1px dashed #cbd5e1', borderRadius: '12px', color: '#64748b', textAlign: 'center' }}>
-                  Select and start a game to open the live host panel.
-                </div>
-              )}
             </div>
           </section>
         </main>

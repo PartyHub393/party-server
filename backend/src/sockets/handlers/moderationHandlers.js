@@ -38,6 +38,11 @@ function registerModerationHandlers(io, socket) {
         [groupId, player.userId]
       );
 
+      pool.query(
+        `DELETE FROM room_assignment_members WHERE group_id = $1 AND user_id = $2`,
+        [groupId, player.userId]
+      );
+
       io.to(player.socketId).emit('kicked', { message: 'You have been kicked from the room.' });
       io.sockets.sockets.get(player.socketId)?.leave(code);
       removePlayerPermanently(code, player.id);
@@ -89,6 +94,11 @@ function registerModerationHandlers(io, socket) {
 
       await pool.query(
         `DELETE FROM group_members WHERE group_id = $1 AND user_id = $2`,
+        [groupId, player.userId]
+      );
+
+      await pool.query(
+        `DELETE FROM room_assignment_members WHERE group_id = $1 AND user_id = $2`,
         [groupId, player.userId]
       );
 

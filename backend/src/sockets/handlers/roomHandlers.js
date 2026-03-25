@@ -6,12 +6,124 @@ const {
   removePlayer,
   getPlayers,
   removeRoom,
+  assignPlayerToGroup,
+  clearRoomAssignments,
+  getRoomAssignments,
+  setRoomAssignmentScore,
+  getRoomAssignmentScores,
+  deleteAssignmentGroup,
+  autoAssignPlayersToGroups,
 } = require('../../rooms');
 const { pool } = require('../../db');
 const { removePlayerFromTrivia } = require('../../games/trivia');
 
 function normalizeCode(roomCode) {
   return (roomCode || '').toUpperCase();
+}
+
+async function resolveGroupIdByCode(code) {
+  const res = await pool.query('SELECT id FROM groups WHERE code = $1', [code]);
+  return res.rows[0]?.id || null;
+}
+
+async function upsertDbAssignment({ groupId, userId, groupName }) {
+  const normalizedName = typeof groupName === 'string' ? groupName.trim() : '';
+
+  if (!normalizedName) {
+    await pool.query(
+      'DELETE FROM room_assignment_members WHERE group_id = $1 AND user_id = $2',
+      [groupId, userId]
+    );
+    return;
+  }
+
+  const assignmentGroupRes = await pool.query(
+    `INSERT INTO room_assignment_groups (group_id, name, score)
+     VALUES ($1, $2, 0)
+     ON CONFLICT (group_id, name) DO UPDATE SET name = EXCLUDED.name
+     RETURNING id`,
+    [groupId, normalizedName]
+  );
+
+  const assignmentGroupId = assignmentGroupRes.rows[0]?.id;
+  if (!assignmentGroupId) return;
+
+  await pool.query(
+    `INSERT INTO room_assignment_members (group_id, assignment_group_id, user_id)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (group_id, user_id)
+     DO UPDATE SET assignment_group_id = EXCLUDED.assignment_group_id, assigned_at = CURRENT_TIMESTAMP`,
+    [groupId, assignmentGroupId, userId]
+  );
+}
+
+async function persistRoomAssignmentsSnapshot({ groupId, players, assignmentScores }) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const assignedNames = new Set();
+    for (const player of players || []) {
+      const name = typeof player.assignedGroup === 'string' ? player.assignedGroup.trim() : '';
+      if (name) assignedNames.add(name);
+    }
+    for (const key of Object.keys(assignmentScores || {})) {
+      const trimmed = (key || '').trim();
+      if (trimmed) assignedNames.add(trimmed);
+    }
+
+    const names = Array.from(assignedNames);
+
+    if (names.length === 0) {
+      await client.query('DELETE FROM room_assignment_members WHERE group_id = $1', [groupId]);
+      await client.query('DELETE FROM room_assignment_groups WHERE group_id = $1', [groupId]);
+      await client.query('COMMIT');
+      return;
+    }
+
+    await client.query('DELETE FROM room_assignment_members WHERE group_id = $1', [groupId]);
+
+    await client.query(
+      'DELETE FROM room_assignment_groups WHERE group_id = $1 AND NOT (name = ANY($2::text[]))',
+      [groupId, names]
+    );
+
+    /** @type {Record<string, string>} */
+    const assignmentGroupIdByName = {};
+    for (const name of names) {
+      const score = Number.isFinite(Number(assignmentScores?.[name])) ? Math.trunc(Number(assignmentScores[name])) : 0;
+      const res = await client.query(
+        `INSERT INTO room_assignment_groups (group_id, name, score)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (group_id, name) DO UPDATE SET score = EXCLUDED.score
+         RETURNING id`,
+        [groupId, name, score]
+      );
+      if (res.rows[0]?.id) {
+        assignmentGroupIdByName[name] = res.rows[0].id;
+      }
+    }
+
+    for (const player of players || []) {
+      const groupName = typeof player.assignedGroup === 'string' ? player.assignedGroup.trim() : '';
+      if (!player.userId || !groupName || !assignmentGroupIdByName[groupName]) continue;
+
+      await client.query(
+        `INSERT INTO room_assignment_members (group_id, assignment_group_id, user_id)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (group_id, user_id)
+         DO UPDATE SET assignment_group_id = EXCLUDED.assignment_group_id, assigned_at = CURRENT_TIMESTAMP`,
+        [groupId, assignmentGroupIdByName[groupName], player.userId]
+      );
+    }
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 function registerRoomHandlers(io, socket) {
@@ -44,7 +156,12 @@ function registerRoomHandlers(io, socket) {
 
     socket.join(code);
     setHost(code, socket.id);
-    socket.emit('host_joined', { roomCode: code, players: getPlayers(code) });
+    socket.emit('host_joined', {
+      roomCode: code,
+      players: getPlayers(code),
+      assignments: getRoomAssignments(code),
+      assignmentScores: getRoomAssignmentScores(code),
+    });
   });
 
   socket.on('join_room', async ({ roomCode, username }) => {
@@ -170,7 +287,12 @@ function registerRoomHandlers(io, socket) {
 
     if (isHostUser) {
       // Hosts should manage rooms via host_room and never join as player members.
-      socket.emit('join_success', { roomCode: code, players: getPlayers(code) || [] });
+      socket.emit('join_success', {
+        roomCode: code,
+        players: getPlayers(code) || [],
+        assignments: getRoomAssignments(code),
+        assignmentScores: getRoomAssignmentScores(code),
+      });
       return;
     }
 
@@ -181,8 +303,229 @@ function registerRoomHandlers(io, socket) {
     }
 
     socket.join(code);
-    socket.emit('join_success', { roomCode: code, players });
-    socket.to(code).emit('player_joined', { players });
+    socket.emit('join_success', {
+      roomCode: code,
+      players,
+      assignments: getRoomAssignments(code),
+      assignmentScores: getRoomAssignmentScores(code),
+    });
+    socket.to(code).emit('player_joined', {
+      players,
+      assignments: getRoomAssignments(code),
+      assignmentScores: getRoomAssignmentScores(code),
+    });
+  });
+
+  socket.on('assign_player_group', async ({ roomCode, playerId, groupName }) => {
+    const code = normalizeCode(roomCode);
+    const room = getRoom(code);
+
+    if (!room) {
+      socket.emit('host_error', { message: 'Room not found' });
+      return;
+    }
+
+    if (room.hostId !== socket.id) {
+      socket.emit('host_error', { message: 'Only the host can assign player groups.' });
+      return;
+    }
+
+    const updatedPlayer = assignPlayerToGroup(code, playerId, groupName);
+    if (!updatedPlayer) {
+      socket.emit('host_error', { message: 'Player not found' });
+      return;
+    }
+
+    if (updatedPlayer.userId) {
+      try {
+        const groupId = await resolveGroupIdByCode(code);
+        if (groupId) {
+          await upsertDbAssignment({
+            groupId,
+            userId: updatedPlayer.userId,
+            groupName: updatedPlayer.assignedGroup,
+          });
+        }
+      } catch (err) {
+        socket.emit('host_error', { message: 'Failed to persist assignment.' });
+      }
+    }
+
+    io.to(code).emit('group_assignments_updated', {
+      players: getPlayers(code),
+      assignments: getRoomAssignments(code),
+      assignmentScores: getRoomAssignmentScores(code),
+    });
+  });
+
+  socket.on('clear_group_assignments', async ({ roomCode }) => {
+    const code = normalizeCode(roomCode);
+    const room = getRoom(code);
+
+    if (!room) {
+      socket.emit('host_error', { message: 'Room not found' });
+      return;
+    }
+
+    if (room.hostId !== socket.id) {
+      socket.emit('host_error', { message: 'Only the host can clear player groups.' });
+      return;
+    }
+
+    clearRoomAssignments(code);
+
+    try {
+      const groupId = await resolveGroupIdByCode(code);
+      if (groupId) {
+        await pool.query('DELETE FROM room_assignment_members WHERE group_id = $1', [groupId]);
+      }
+    } catch (err) {
+      socket.emit('host_error', { message: 'Failed to clear assignments in database.' });
+    }
+
+    io.to(code).emit('group_assignments_updated', {
+      players: getPlayers(code),
+      assignments: getRoomAssignments(code),
+      assignmentScores: getRoomAssignmentScores(code),
+    });
+  });
+
+  socket.on('set_assignment_score', async ({ roomCode, groupName, score }) => {
+    const code = normalizeCode(roomCode);
+    const room = getRoom(code);
+
+    if (!room) {
+      socket.emit('host_error', { message: 'Room not found' });
+      return;
+    }
+
+    if (room.hostId !== socket.id) {
+      socket.emit('host_error', { message: 'Only the host can set assignment scores.' });
+      return;
+    }
+
+    const updatedScore = setRoomAssignmentScore(code, groupName, score);
+    if (updatedScore === null) {
+      socket.emit('host_error', { message: 'Invalid assignment group or score.' });
+      return;
+    }
+
+    try {
+      const groupId = await resolveGroupIdByCode(code);
+      if (groupId) {
+        await pool.query(
+          `INSERT INTO room_assignment_groups (group_id, name, score)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (group_id, name) DO UPDATE SET score = EXCLUDED.score`,
+          [groupId, groupName.trim(), updatedScore]
+        );
+      }
+    } catch (err) {
+      socket.emit('host_error', { message: 'Failed to persist assignment score.' });
+    }
+
+    io.to(code).emit('group_assignments_updated', {
+      players: getPlayers(code),
+      assignments: getRoomAssignments(code),
+      assignmentScores: getRoomAssignmentScores(code),
+    });
+  });
+
+  socket.on('delete_assignment_group', async ({ roomCode, groupName }) => {
+    const code = normalizeCode(roomCode);
+    const room = getRoom(code);
+
+    if (!room) {
+      socket.emit('host_error', { message: 'Room not found' });
+      return;
+    }
+
+    if (room.hostId !== socket.id) {
+      socket.emit('host_error', { message: 'Only the host can delete assignment groups.' });
+      return;
+    }
+
+    const updated = deleteAssignmentGroup(code, groupName);
+    if (!updated) {
+      socket.emit('host_error', { message: 'Invalid assignment group.' });
+      return;
+    }
+
+    try {
+      const groupId = await resolveGroupIdByCode(code);
+      if (groupId) {
+        await pool.query(
+          'DELETE FROM room_assignment_groups WHERE group_id = $1 AND name = $2',
+          [groupId, String(groupName || '').trim()]
+        );
+      }
+    } catch (err) {
+      socket.emit('host_error', { message: 'Failed to delete assignment group.' });
+    }
+
+    io.to(code).emit('group_assignments_updated', {
+      players: getPlayers(code),
+      assignments: getRoomAssignments(code),
+      assignmentScores: getRoomAssignmentScores(code),
+    });
+  });
+
+  socket.on('auto_assign_members', async ({ roomCode, targetSize }) => {
+    const code = normalizeCode(roomCode);
+    const room = getRoom(code);
+
+    if (!room) {
+      socket.emit('host_error', { message: 'Room not found' });
+      return;
+    }
+
+    if (room.hostId !== socket.id) {
+      socket.emit('host_error', { message: 'Only the host can auto-assign members.' });
+      return;
+    }
+
+    const updated = autoAssignPlayersToGroups(code, targetSize);
+    if (!updated) {
+      socket.emit('host_error', { message: 'Failed to auto-assign members.' });
+      return;
+    }
+
+    try {
+      const groupId = await resolveGroupIdByCode(code);
+      if (groupId) {
+        await persistRoomAssignmentsSnapshot({
+          groupId,
+          players: getPlayers(code),
+          assignmentScores: getRoomAssignmentScores(code),
+        });
+      }
+    } catch (err) {
+      socket.emit('host_error', { message: 'Failed to persist auto-assignment.' });
+    }
+
+    io.to(code).emit('group_assignments_updated', {
+      players: getPlayers(code),
+      assignments: getRoomAssignments(code),
+      assignmentScores: getRoomAssignmentScores(code),
+    });
+  });
+
+  socket.on('get_group_assignments', ({ roomCode }, callback) => {
+    const code = normalizeCode(roomCode);
+    const room = getRoom(code);
+
+    if (!room) {
+      if (callback) callback({ assignments: {}, players: [] });
+      return;
+    }
+
+    if (callback) {
+      callback({
+        assignments: getRoomAssignments(code),
+        players: getPlayers(code),
+        assignmentScores: getRoomAssignmentScores(code),
+      });
+    }
   });
 
   socket.on('host_closed', () => {
@@ -205,7 +548,8 @@ function registerRoomHandlers(io, socket) {
       return;
     }
 
-    callback({ count: room.players.length });
+    const onlineCount = room.players.filter((player) => player.online !== false).length;
+    callback({ count: onlineCount });
   });
 
   socket.on('disconnecting', () => {
@@ -215,7 +559,11 @@ function registerRoomHandlers(io, socket) {
 
       const players = removePlayer(code, socket.id);
       if (players !== null) {
-        io.to(code).emit('player_joined', { players });
+        io.to(code).emit('player_joined', {
+          players,
+          assignments: getRoomAssignments(code),
+          assignmentScores: getRoomAssignmentScores(code),
+        });
       }
     });
   });
