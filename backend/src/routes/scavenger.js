@@ -13,8 +13,9 @@ function createScavengerState() {
  * @param {object} options
  * @param {object} options.scavengerChallenges - Same shape as scavengerChallenges.json
  * @param {ReturnType<typeof createScavengerState>} options.scavengerState - Mutable in-memory state
+ * @param {{scanImageData: Function}=} options.imageScanner - Optional image safety scanner
  */
-function createScavengerRouter({ scavengerChallenges, scavengerState }) {
+function createScavengerRouter({ scavengerChallenges, scavengerState, imageScanner }) {
   const router = express.Router();
 
   router.get('/api/scavenger/challenges', (req, res) => {
@@ -56,7 +57,7 @@ function createScavengerRouter({ scavengerChallenges, scavengerState }) {
     return res.json({ teamName: scavengerState.teamName });
   });
 
-  router.post('/api/scavenger/submit', (req, res) => {
+  router.post('/api/scavenger/submit', async (req, res) => {
     const { challengeId, imageData, playerName } = req.body;
 
     if (!challengeId || !imageData) {
@@ -74,6 +75,39 @@ function createScavengerRouter({ scavengerChallenges, scavengerState }) {
     if (!category) {
       return res.status(400).json({ error: 'Unknown challengeId.' });
     }
+    const challenge = category.challenges.find((c) => c.id === challengeId);
+
+    let safetyScan = {
+      allowed: true,
+      scanned: false,
+      matchedPrompt: true,
+      reason: 'Safety scan not configured.',
+    };
+
+    if (imageScanner && typeof imageScanner.scanImageData === 'function') {
+      try {
+        safetyScan = await imageScanner.scanImageData({
+          imageData,
+          challengeId,
+          challengeTitle: challenge && challenge.title,
+          challengeDescription: challenge && challenge.description,
+          categoryName: category.name,
+          playerName,
+        });
+      } catch (err) {
+        console.error('Gemini safety scan failed:', err);
+        return res.status(503).json({
+          error: 'Unable to scan image right now. Please try again.',
+        });
+      }
+
+    }
+
+    const flaggedBySafetyScan = !safetyScan || safetyScan.allowed !== true;
+    const scanWasPerformed = !imageScanner
+      ? false
+      : (safetyScan && safetyScan.scanned !== false);
+    const autoApproved = !flaggedBySafetyScan && scanWasPerformed;
 
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const submission = {
@@ -81,14 +115,30 @@ function createScavengerRouter({ scavengerChallenges, scavengerState }) {
       challengeId,
       imageData,
       playerName: (playerName || 'Player').trim(),
-      approved: null,
-      comment: '',
+      approved: autoApproved ? true : null,
+      comment: autoApproved ? 'Auto-approved by Gemini scan.' : '',
+      safetyScan,
       createdAt: new Date().toISOString(),
     };
 
     scavengerState.submissions.push(submission);
 
-    return res.status(201).json({ submission });
+    if (autoApproved && !scavengerState.completedChallengeIds.includes(challengeId)) {
+      scavengerState.completedChallengeIds.push(challengeId);
+      if (challenge && typeof challenge.points === 'number') {
+        scavengerState.totalPoints += challenge.points;
+      }
+    }
+
+    return res.status(201).json({
+      submission,
+      flaggedBySafetyScan,
+      autoApproved,
+      scanWarning:
+        flaggedBySafetyScan && safetyScan && typeof safetyScan.reason === 'string'
+          ? safetyScan.reason
+          : '',
+    });
   });
 
   router.post('/api/scavenger/review', (req, res) => {

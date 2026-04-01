@@ -36,7 +36,8 @@ function createScavengerApp(overrides = {}) {
   app.use(express.json({ limit: '2mb' }))
   const scavengerState = overrides.scavengerState ?? createScavengerState()
   const scavengerChallenges = overrides.scavengerChallenges ?? fixtureChallengesMinimal
-  app.use(createScavengerRouter({ scavengerChallenges, scavengerState }))
+  const imageScanner = overrides.imageScanner
+  app.use(createScavengerRouter({ scavengerChallenges, scavengerState, imageScanner }))
   return { app, scavengerState, scavengerChallenges }
 }
 
@@ -279,6 +280,7 @@ test('POST /api/scavenger/submit - 201 shape, default playerName, trim playerNam
   assert.equal(j1.submission.imageData, MINIMAL_PNG_DATA_URL)
   assert.equal(j1.submission.playerName, 'Player')
   assert.equal(j1.submission.approved, null)
+  assert.equal(j1.autoApproved, false)
   assert.equal(j1.submission.comment, '')
   assert.ok(j1.submission.createdAt)
   assert.equal(scavengerState.submissions.length, 1)
@@ -314,6 +316,147 @@ test('POST /api/scavenger/submit - multiple pending submissions for same challen
     scavengerState.submissions.filter((s) => s.challengeId === 'ch-10pts').length,
     2
   )
+})
+
+// Verifies flagged scans still create a pending submission for manual review.
+test('POST /api/scavenger/submit - scanner-flagged image is queued for manual approval', async (t) => {
+  const imageScanner = {
+    async scanImageData() {
+      return {
+        allowed: false,
+        scanned: true,
+        matchedPrompt: false,
+        reason: 'Image appears unsafe for this event.',
+      }
+    },
+  }
+  const { app, scavengerState } = createScavengerApp({ imageScanner })
+  const { server, baseUrl } = await listen(app)
+  t.after(() => close(server))
+
+  const res = await postJson(baseUrl, '/api/scavenger/submit', {
+    challengeId: 'ch-10pts',
+    imageData: MINIMAL_PNG_DATA_URL,
+    playerName: 'A',
+  })
+  assert.equal(res.status, 201)
+  const body = await res.json()
+  assert.equal(body.flaggedBySafetyScan, true)
+  assert.equal(body.autoApproved, false)
+  assert.match(body.scanWarning, /unsafe/i)
+  assert.equal(scavengerState.submissions.length, 1)
+  assert.equal(scavengerState.submissions[0].approved, null)
+  assert.equal(scavengerState.submissions[0].safetyScan.allowed, false)
+})
+
+// Verifies scan pass with challenge-match auto-approves and awards points immediately.
+test('POST /api/scavenger/submit - scanner pass auto-approves submission', async (t) => {
+  const imageScanner = {
+    async scanImageData() {
+      return {
+        allowed: true,
+        scanned: true,
+        matchedPrompt: true,
+        reason: 'Safe and matches challenge.',
+      }
+    },
+  }
+  const { app, scavengerState } = createScavengerApp({ imageScanner })
+  const { server, baseUrl } = await listen(app)
+  t.after(() => close(server))
+
+  const res = await postJson(baseUrl, '/api/scavenger/submit', {
+    challengeId: 'ch-10pts',
+    imageData: MINIMAL_PNG_DATA_URL,
+    playerName: 'A',
+  })
+
+  assert.equal(res.status, 201)
+  const body = await res.json()
+  assert.equal(body.flaggedBySafetyScan, false)
+  assert.equal(body.autoApproved, true)
+  assert.equal(body.submission.approved, true)
+  assert.match(body.submission.comment, /auto-approved/i)
+  assert.equal(scavengerState.totalPoints, 10)
+  assert.deepEqual(scavengerState.completedChallengeIds, ['ch-10pts'])
+})
+
+// Verifies auto-approval still works if scanner omits the optional `scanned` property.
+test('POST /api/scavenger/submit - scanner pass auto-approves even without scanned flag', async (t) => {
+  const imageScanner = {
+    async scanImageData() {
+      return {
+        allowed: true,
+        matchedPrompt: true,
+        reason: 'Safe and on prompt.',
+      }
+    },
+  }
+  const { app, scavengerState } = createScavengerApp({ imageScanner })
+  const { server, baseUrl } = await listen(app)
+  t.after(() => close(server))
+
+  const res = await postJson(baseUrl, '/api/scavenger/submit', {
+    challengeId: 'ch-10pts',
+    imageData: MINIMAL_PNG_DATA_URL,
+  })
+
+  assert.equal(res.status, 201)
+  const body = await res.json()
+  assert.equal(body.autoApproved, true)
+  assert.equal(body.submission.approved, true)
+  assert.equal(scavengerState.totalPoints, 10)
+  assert.deepEqual(scavengerState.completedChallengeIds, ['ch-10pts'])
+})
+
+// Verifies a scanner-flagged submission can still be approved by review endpoint.
+test('POST /api/scavenger/review - can approve scanner-flagged submission', async (t) => {
+  const imageScanner = {
+    async scanImageData() {
+      return { allowed: false, reason: 'Needs host review' }
+    },
+  }
+  const { app, scavengerState } = createScavengerApp({ imageScanner })
+  const { server, baseUrl } = await listen(app)
+  t.after(() => close(server))
+
+  const submitRes = await postJson(baseUrl, '/api/scavenger/submit', {
+    challengeId: 'ch-10pts',
+    imageData: MINIMAL_PNG_DATA_URL,
+    playerName: 'A',
+  })
+  const submitBody = await submitRes.json()
+
+  const rev = await postJson(baseUrl, '/api/scavenger/review', {
+    submissionId: submitBody.submission.id,
+    approved: true,
+    comment: 'approved by host',
+  })
+
+  assert.equal(rev.status, 200)
+  assert.equal(scavengerState.totalPoints, 10)
+  assert.deepEqual(scavengerState.completedChallengeIds, ['ch-10pts'])
+})
+
+// Verifies submit returns 503 when scanner is configured but currently unavailable.
+test('POST /api/scavenger/submit - scanner outage returns 503', async (t) => {
+  const imageScanner = {
+    async scanImageData() {
+      throw new Error('Gemini API timeout')
+    },
+  }
+  const { app, scavengerState } = createScavengerApp({ imageScanner })
+  const { server, baseUrl } = await listen(app)
+  t.after(() => close(server))
+
+  const res = await postJson(baseUrl, '/api/scavenger/submit', {
+    challengeId: 'ch-10pts',
+    imageData: MINIMAL_PNG_DATA_URL,
+  })
+  assert.equal(res.status, 503)
+  const body = await res.json()
+  assert.match(body.error, /unable to scan image/i)
+  assert.equal(scavengerState.submissions.length, 0)
 })
 
 // --- Review ---

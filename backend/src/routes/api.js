@@ -4,11 +4,13 @@ const { pool } = require('../db');
 const { createAuthRouter } = require('./auth');
 const { createGroupsRouter } = require('./groups');
 const { createScavengerRouter, createScavengerState } = require('./scavenger');
+const { createGeminiImageScanner } = require('../services/geminiImageScanner');
 const bcrypt = require('bcrypt');
 const questions = require('../data/questions.json');
 const scavengerChallenges = require('../data/scavengerChallenges.json');
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const imageScanner = createGeminiImageScanner();
 
 function generateGroupCode() {
   return Array.from(
@@ -36,7 +38,11 @@ router.get('/db', async (req, res) => {
 router.use(createAuthRouter({ pool, bcrypt }));
 
 router.use(
-  createScavengerRouter({ scavengerChallenges, scavengerState })
+  createScavengerRouter({
+    scavengerChallenges,
+    scavengerState,
+    imageScanner,
+  })
 );
 
 router.get('/api/host/groups', async (req, res) => {
