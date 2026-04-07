@@ -158,8 +158,10 @@ export async function getScavengerChallenges() {
 
 export async function getScavengerState() {
   let res
+  const groupCode = localStorage.getItem('joined_group_code')
+  const qs = groupCode ? `?groupCode=${encodeURIComponent(groupCode)}` : ''
   try {
-    res = await fetch(`${API_BASE}/api/scavenger/state`, {
+    res = await fetch(`${API_BASE}/api/scavenger/state${qs}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     })
@@ -173,8 +175,10 @@ export async function getScavengerState() {
 
 export async function setScavengerTeamName(teamName) {
   let res
+  const groupCode = localStorage.getItem('joined_group_code')
+  const qs = groupCode ? `?groupCode=${encodeURIComponent(groupCode)}` : ''
   try {
-    res = await fetch(`${API_BASE}/api/scavenger/team`, {
+    res = await fetch(`${API_BASE}/api/scavenger/team${qs}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ teamName }),
@@ -189,8 +193,10 @@ export async function setScavengerTeamName(teamName) {
 
 export async function submitScavengerPhoto({ challengeId, imageData, playerName }) {
   let res
+  const groupCode = localStorage.getItem('joined_group_code')
+  const qs = groupCode ? `?groupCode=${encodeURIComponent(groupCode)}` : ''
   try {
-    res = await fetch(`${API_BASE}/api/scavenger/submit`, {
+    res = await fetch(`${API_BASE}/api/scavenger/submit${qs}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ challengeId, imageData, playerName }),
@@ -205,8 +211,10 @@ export async function submitScavengerPhoto({ challengeId, imageData, playerName 
 
 export async function reviewScavengerSubmission({ submissionId, approved, comment }) {
   let res
+  const groupCode = localStorage.getItem('joined_group_code')
+  const qs = groupCode ? `?groupCode=${encodeURIComponent(groupCode)}` : ''
   try {
-    res = await fetch(`${API_BASE}/api/scavenger/review`, {
+    res = await fetch(`${API_BASE}/api/scavenger/review${qs}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ submissionId, approved, comment }),
@@ -221,8 +229,10 @@ export async function reviewScavengerSubmission({ submissionId, approved, commen
 
 export async function cancelScavengerSubmission({ submissionId }) {
   let res
+  const groupCode = localStorage.getItem('joined_group_code')
+  const qs = groupCode ? `?groupCode=${encodeURIComponent(groupCode)}` : ''
   try {
-    res = await fetch(`${API_BASE}/api/scavenger/cancel`, {
+    res = await fetch(`${API_BASE}/api/scavenger/cancel${qs}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ submissionId }),

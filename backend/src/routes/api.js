@@ -3,7 +3,7 @@ const router = express.Router();
 const { pool } = require('../db');
 const { createAuthRouter } = require('./auth');
 const { createGroupsRouter } = require('./groups');
-const { createScavengerRouter, createScavengerState } = require('./scavenger');
+const { createScavengerRouter, createScavengerStateStore } = require('./scavenger');
 const { createGeminiImageScanner } = require('../services/geminiImageScanner');
 const bcrypt = require('bcrypt');
 const questions = require('../data/questions.json');
@@ -19,7 +19,7 @@ function generateGroupCode() {
   ).join('');
 }
 
-const scavengerState = createScavengerState();
+const scavengerStateStore = createScavengerStateStore();
 
 router.get('/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -40,7 +40,7 @@ router.use(createAuthRouter({ pool, bcrypt }));
 router.use(
   createScavengerRouter({
     scavengerChallenges,
-    scavengerState,
+    scavengerStateStore,
     imageScanner,
   })
 );

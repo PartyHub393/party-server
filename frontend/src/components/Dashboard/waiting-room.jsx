@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSocket } from '../../useSocket';
 import { useAuth } from '../../contexts/AuthContext';
-import { getPlayerGroups } from '../../api';
+import { getPlayerGroups, getScavengerState } from '../../api';
 import GameSlot from '../games/GameSlot';
 import Navbar from '../Navbar/Navbar';
 import './waiting-room.css'
@@ -12,6 +12,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
   const { user } = useAuth();
   const [orientees, setOrientees] = useState(initialOrientees || []);
   const [assignmentScores, setAssignmentScores] = useState({});
+  const [scavengerTotalPoints, setScavengerTotalPoints] = useState(null);
   const [roomTab, setRoomTab] = useState('teammates');
   const [validGroup, setValidGroup] = useState(false);
   const [activeGame, setActiveGame] = useState(null);
@@ -178,6 +179,26 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
     lastJoinedRoomRef.current = effectiveRoomCode;
   }, [connected, socket, effectiveRoomCode, effectiveCurrentUser, user, validGroup, navigate, setRoomCode]);
 
+  // Keep scavenger score in sync so the Scores tab reflects scavenger hunt points.
+  useEffect(() => {
+    if (!effectiveRoomCode) return;
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const state = await getScavengerState();
+        if (!cancelled) setScavengerTotalPoints(state?.totalPoints ?? 0);
+      } catch {
+        // ignore; keep last-known value
+      }
+    };
+    tick();
+    const id = setInterval(tick, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [effectiveRoomCode]);
+
   const displayedRoomCode = effectiveRoomCode || 'No group selected';
   const displayedCurrentUser = effectiveCurrentUser;
   const myTeamName = useMemo(() => {
@@ -190,6 +211,15 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
 
     return me?.assignedGroup || null;
   }, [orientees, user?.id, displayedCurrentUser?.id]);
+
+  const scoreGroupNames = useMemo(() => {
+    const names = new Set(Object.keys(assignmentScores || {}));
+    (orientees || []).forEach((o) => {
+      if (o?.assignedGroup) names.add(o.assignedGroup);
+    });
+    if (names.size === 0 && myTeamName) names.add(myTeamName);
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [assignmentScores, orientees, myTeamName]);
 
   return (
     <div className="dashboard-wrapper waiting-room-view">
@@ -255,12 +285,17 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
               })
             )
           ) : (
-            Object.keys(assignmentScores || {}).length === 0 ? (
-              <div style={{ color: 'var(--text-muted)' }}>No assignment scores yet.</div>
+            scoreGroupNames.length === 0 ? (
+              <div style={{ color: 'var(--text-muted)' }}>
+                {activeGame === 'scavenger' ? 'No team scores yet.' : 'No assignment scores yet.'}
+              </div>
             ) : (
-              Object.entries(assignmentScores)
-                .sort((a, b) => a[0].localeCompare(b[0]))
-                .map(([groupName, score]) => (
+              scoreGroupNames.map((groupName) => {
+                const score =
+                  activeGame === 'scavenger'
+                    ? (groupName === myTeamName ? (scavengerTotalPoints ?? 0) : 0)
+                    : (assignmentScores?.[groupName] ?? 0);
+                return (
                   <div key={groupName} className={`orientees-item ${myTeamName === groupName ? 'is-my-team' : ''}`}>
                     <div className="orientee-info" style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span className="orientees-name">
@@ -270,7 +305,8 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
                       <span className="assignment-score">{score}</span>
                     </div>
                   </div>
-                ))
+                );
+              })
             )
           )}
         </div>

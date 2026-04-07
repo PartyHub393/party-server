@@ -45,7 +45,7 @@ function normalizeReason(reason, fallback) {
 }
 
 function createGeminiImageScanner({
-  apiKey = "AIzaSyBTRA4TBPG5fuZbJ5Ut-eoe_il-FBfnIP0",
+  apiKey = "AIzaSyD9m5eN_aDhKQG0K_TIAGF1nOlqFTmPJI4",
   model = DEFAULT_MODEL,
   endpoint = DEFAULT_ENDPOINT,
   fetchImpl = global.fetch,

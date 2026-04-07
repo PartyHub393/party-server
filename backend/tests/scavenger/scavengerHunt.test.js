@@ -6,6 +6,7 @@ const { createServer } = require('http')
 const {
   createScavengerRouter,
   createScavengerState,
+  createScavengerStateStore,
 } = require('../../src/routes/scavenger')
 
 const realChallenges = require('../../src/data/scavengerChallenges.json')
@@ -34,11 +35,15 @@ const fixtureChallengesMinimal = {
 function createScavengerApp(overrides = {}) {
   const app = express()
   app.use(express.json({ limit: '2mb' }))
-  const scavengerState = overrides.scavengerState ?? createScavengerState()
+  const scavengerStateStore = overrides.scavengerStateStore ?? createScavengerStateStore()
+  // Convenience accessor for legacy tests that want a direct state object.
+  const scavengerState =
+    overrides.scavengerState ??
+    scavengerStateStore.get(overrides.groupCode || 'GLOBAL')
   const scavengerChallenges = overrides.scavengerChallenges ?? fixtureChallengesMinimal
   const imageScanner = overrides.imageScanner
-  app.use(createScavengerRouter({ scavengerChallenges, scavengerState, imageScanner }))
-  return { app, scavengerState, scavengerChallenges }
+  app.use(createScavengerRouter({ scavengerChallenges, scavengerStateStore, imageScanner }))
+  return { app, scavengerState, scavengerStateStore, scavengerChallenges }
 }
 
 function listen(app) {
@@ -63,6 +68,11 @@ async function postJson(baseUrl, path, body) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
+}
+
+async function postJsonGroup(baseUrl, path, groupCode, body) {
+  const qs = groupCode ? `?groupCode=${encodeURIComponent(groupCode)}` : ''
+  return postJson(baseUrl, `${path}${qs}`, body)
 }
 
 // --- Challenges & state ---
@@ -439,7 +449,7 @@ test('POST /api/scavenger/review - can approve scanner-flagged submission', asyn
 })
 
 // Verifies submit returns 503 when scanner is configured but currently unavailable.
-test('POST /api/scavenger/submit - scanner outage returns 503', async (t) => {
+test('POST /api/scavenger/submit - scanner outage queues submission for host review', async (t) => {
   const imageScanner = {
     async scanImageData() {
       throw new Error('Gemini API timeout')
@@ -453,10 +463,57 @@ test('POST /api/scavenger/submit - scanner outage returns 503', async (t) => {
     challengeId: 'ch-10pts',
     imageData: MINIMAL_PNG_DATA_URL,
   })
-  assert.equal(res.status, 503)
+  assert.equal(res.status, 201)
   const body = await res.json()
-  assert.match(body.error, /unable to scan image/i)
-  assert.equal(scavengerState.submissions.length, 0)
+  assert.equal(body.autoApproved, false)
+  assert.equal(body.flaggedBySafetyScan, true)
+  assert.match(body.scanWarning, /unable to scan/i)
+  assert.equal(scavengerState.submissions.length, 1)
+  assert.equal(scavengerState.submissions[0].approved, null)
+})
+
+test('team scoring: approvals add to group totalPoints (not per-player), isolated by groupCode', async (t) => {
+  const imageScanner = {
+    async scanImageData() {
+      return { allowed: false, scanned: true, matchedPrompt: false, reason: 'Host review required' }
+    },
+  }
+
+  const { app } = createScavengerApp({ imageScanner })
+  const { server, baseUrl } = await listen(app)
+  t.after(() => close(server))
+
+  // Submit two different challenges in group A by two different "players"
+  const s1 = await (await postJsonGroup(baseUrl, '/api/scavenger/submit', 'AAA111', {
+    challengeId: 'ch-10pts',
+    imageData: MINIMAL_PNG_DATA_URL,
+    playerName: 'Player One',
+  })).json()
+  const s2 = await (await postJsonGroup(baseUrl, '/api/scavenger/submit', 'AAA111', {
+    challengeId: 'ch-5pts',
+    imageData: MINIMAL_PNG_DATA_URL,
+    playerName: 'Player Two',
+  })).json()
+
+  // Approve both: group total should be 15 regardless of uploader identity
+  await postJsonGroup(baseUrl, '/api/scavenger/review', 'AAA111', {
+    submissionId: s1.submission.id,
+    approved: true,
+  })
+  await postJsonGroup(baseUrl, '/api/scavenger/review', 'AAA111', {
+    submissionId: s2.submission.id,
+    approved: true,
+  })
+
+  const stateA = await (await fetch(`${baseUrl}/api/scavenger/state?groupCode=AAA111`)).json()
+  assert.equal(stateA.totalPoints, 15)
+  assert.equal(stateA.challengesCompleted, 2)
+
+  // Group B should remain untouched
+  const stateB = await (await fetch(`${baseUrl}/api/scavenger/state?groupCode=BBB222`)).json()
+  assert.equal(stateB.totalPoints, 0)
+  assert.equal(stateB.challengesCompleted, 0)
+  assert.equal(stateB.submissions.length, 0)
 })
 
 // --- Review ---

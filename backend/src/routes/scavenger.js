@@ -9,13 +9,38 @@ function createScavengerState() {
   };
 }
 
+function normalizeGroupCode(groupCode) {
+  const code = String(groupCode || '').trim().toUpperCase();
+  return code || 'GLOBAL';
+}
+
+function getGroupCodeFromReq(req) {
+  return normalizeGroupCode(req.query.groupCode || req.headers['x-group-code']);
+}
+
+function createScavengerStateStore() {
+  const byGroupCode = new Map();
+  return {
+    get(groupCode) {
+      const code = normalizeGroupCode(groupCode);
+      if (!byGroupCode.has(code)) {
+        byGroupCode.set(code, createScavengerState());
+      }
+      return byGroupCode.get(code);
+    },
+    _unsafeDebugSnapshot() {
+      return byGroupCode;
+    },
+  };
+}
+
 /**
  * @param {object} options
  * @param {object} options.scavengerChallenges - Same shape as scavengerChallenges.json
- * @param {ReturnType<typeof createScavengerState>} options.scavengerState - Mutable in-memory state
+ * @param {ReturnType<typeof createScavengerStateStore>} options.scavengerStateStore - In-memory state store per group
  * @param {{scanImageData: Function}=} options.imageScanner - Optional image safety scanner
  */
-function createScavengerRouter({ scavengerChallenges, scavengerState, imageScanner }) {
+function createScavengerRouter({ scavengerChallenges, scavengerStateStore, imageScanner }) {
   const router = express.Router();
 
   router.get('/api/scavenger/challenges', (req, res) => {
@@ -23,6 +48,7 @@ function createScavengerRouter({ scavengerChallenges, scavengerState, imageScann
   });
 
   router.get('/api/scavenger/state', (req, res) => {
+    const scavengerState = scavengerStateStore.get(getGroupCodeFromReq(req));
     const { teamName, totalPoints, completedChallengeIds, submissions } = scavengerState;
 
     const categories = scavengerChallenges.categories || [];
@@ -49,6 +75,7 @@ function createScavengerRouter({ scavengerChallenges, scavengerState, imageScann
   });
 
   router.post('/api/scavenger/team', (req, res) => {
+    const scavengerState = scavengerStateStore.get(getGroupCodeFromReq(req));
     const { teamName } = req.body;
     if (!teamName || !teamName.trim()) {
       return res.status(400).json({ error: 'Team name is required.' });
@@ -58,6 +85,7 @@ function createScavengerRouter({ scavengerChallenges, scavengerState, imageScann
   });
 
   router.post('/api/scavenger/submit', async (req, res) => {
+    const scavengerState = scavengerStateStore.get(getGroupCodeFromReq(req));
     const { challengeId, imageData, playerName } = req.body;
 
     if (!challengeId || !imageData) {
@@ -96,9 +124,15 @@ function createScavengerRouter({ scavengerChallenges, scavengerState, imageScann
         });
       } catch (err) {
         console.error('Gemini safety scan failed:', err);
-        return res.status(503).json({
-          error: 'Unable to scan image right now. Please try again.',
-        });
+        safetyScan = {
+          allowed: false,
+          scanned: false,
+          matchedPrompt: false,
+          provider: 'gemini',
+          scannedAt: new Date().toISOString(),
+          reason:
+            'Gemini was unable to scan this image right now. Sent to host for manual review.',
+        };
       }
 
     }
@@ -112,6 +146,7 @@ function createScavengerRouter({ scavengerChallenges, scavengerState, imageScann
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const submission = {
       id,
+      groupCode: getGroupCodeFromReq(req),
       challengeId,
       imageData,
       playerName: (playerName || 'Player').trim(),
@@ -142,6 +177,7 @@ function createScavengerRouter({ scavengerChallenges, scavengerState, imageScann
   });
 
   router.post('/api/scavenger/review', (req, res) => {
+    const scavengerState = scavengerStateStore.get(getGroupCodeFromReq(req));
     const { submissionId, approved, comment } = req.body;
 
     if (!submissionId || typeof approved !== 'boolean') {
@@ -179,6 +215,7 @@ function createScavengerRouter({ scavengerChallenges, scavengerState, imageScann
   });
 
   router.post('/api/scavenger/cancel', (req, res) => {
+    const scavengerState = scavengerStateStore.get(getGroupCodeFromReq(req));
     const { submissionId } = req.body;
 
     if (!submissionId) {
@@ -208,4 +245,5 @@ function createScavengerRouter({ scavengerChallenges, scavengerState, imageScann
 module.exports = {
   createScavengerRouter,
   createScavengerState,
+  createScavengerStateStore,
 };
