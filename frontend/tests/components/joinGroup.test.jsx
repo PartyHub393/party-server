@@ -65,12 +65,16 @@ describe('JoinGroup', () => {
     });
   });
 
-  it('Renders states message (kick, ban) when provided', () => {
+  it('Renders states message (kick, ban) when provided', async () => {
     vi.mocked(useLocation).mockReturnValue({
       state: { message: 'You were removed from the room.' },
     });
 
     const { getByText } = render(<JoinGroup />);
+
+    await waitFor(() => {
+      expect(getPlayerGroups).toHaveBeenCalled();
+    });
 
     expect(getByText('You were removed from the room.')).toBeTruthy();
   });

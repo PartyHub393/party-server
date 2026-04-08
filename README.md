@@ -65,6 +65,28 @@ AI was used as a coding partner to:
     - requests with random/malformed inputs should **not crash** the server (no 500s)
     - responses should remain **JSON** and return within a reasonable timeout
 
+## Testing telemetry
+
+Telemetry below was captured on **2026-04-07** 
+
+- **Backend regression + fuzz telemetry**
+  - Command: `cd backend && npm test`
+  - Result: **51 passed, 0 failed**
+  - Duration: **2115.3787 ms**
+  - Includes fuzz coverage for multiple features:
+    - `/api/scavenger/submit` (fuzz)
+    - `/api/createaccount` + `/api/login` (fuzz)
+    - `/api/rooms` (fuzz)
+
+- **Frontend regression telemetry**
+  - Command: `cd frontend && npm test -- --run`
+  - Result: **3 passed test files, 16 passed tests, 0 failed**
+  - Duration: **4.08 s**
+
+- **Bug/quality signal captured during test telemetry**
+  - Previously observed React `act(...)` warning in the `JoinGroup` test path due to the rendering not awaiting for asyncronous effects/code to run first
+  - Current frontend telemetry run completes with no `act(...)` warnings.
+
 To run backend tests:
 
 ```bash
