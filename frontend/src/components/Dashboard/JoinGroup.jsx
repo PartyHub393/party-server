@@ -36,6 +36,13 @@ export default function JoinGroup() {
     const loadJoinedGroup = async () => {
       setCheckingRedirect(true);
       try {
+        // If the user intentionally left a room, skip one auto-redirect cycle.
+        const justLeftRoom = localStorage.getItem('just_left_room') === '1';
+        if (justLeftRoom) {
+          localStorage.removeItem('just_left_room');
+          return;
+        }
+
         // If the user is a host, check if they have any groups before showing the join screen.
         if (user?.role === 'host' && user?.id) {
           const hostRes = await getHostGroups(user.id);

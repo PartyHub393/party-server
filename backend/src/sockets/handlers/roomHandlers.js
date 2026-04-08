@@ -552,6 +552,39 @@ function registerRoomHandlers(io, socket) {
     callback({ count: onlineCount });
   });
 
+  socket.on('leave_room', async ({ roomCode }) => {
+    const code = normalizeCode(roomCode);
+    if (!code) return;
+
+    removePlayerFromTrivia(code, socket.id);
+    const players = removePlayer(code, socket.id);
+    socket.leave(code);
+
+    const userId = socket.handshake.auth?.userId;
+    if (userId) {
+      try {
+        await pool.query(
+          `DELETE FROM group_members gm
+           USING groups g
+           WHERE gm.group_id = g.id
+             AND g.code = $1
+             AND gm.user_id = $2`,
+          [code, userId]
+        );
+      } catch (err) {
+        console.warn('Failed to remove group membership on leave_room:', err);
+      }
+    }
+
+    if (players !== null) {
+      io.to(code).emit('player_left', {
+        players,
+        assignments: getRoomAssignments(code),
+        assignmentScores: getRoomAssignmentScores(code),
+      });
+    }
+  });
+
   socket.on('disconnecting', () => {
     const roomsJoined = Array.from(socket.rooms).filter((r) => r !== socket.id);
     roomsJoined.forEach((code) => {

@@ -16,6 +16,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
   const [roomTab, setRoomTab] = useState('teammates');
   const [validGroup, setValidGroup] = useState(false);
   const [activeGame, setActiveGame] = useState(null);
+  const [isLeaving, setIsLeaving] = useState(false);
   const location = useLocation();
   const locationState = location.state || {};
 
@@ -94,6 +95,10 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
       applyRoomSnapshot({ players, assignments, scores: scores || {} });
     };
 
+    const handlePlayerLeft = ({ players, assignments, assignmentScores: scores }) => {
+      applyRoomSnapshot({ players, assignments, scores: scores || {} });
+    };
+
     const handleJoinSuccess = ({ players, assignments, assignmentScores: scores }) => {
       applyRoomSnapshot({ players, assignments, scores: scores || {} });
     };
@@ -129,6 +134,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
     };
 
     socket.on('player_joined', handlePlayerJoined);
+    socket.on('player_left', handlePlayerLeft);
     socket.on('join_success', handleJoinSuccess);
     socket.on('join_error', handleJoinError);
     socket.on('game_started', handleGameStarted);
@@ -139,6 +145,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
 
     return () => {
       socket.off('player_joined', handlePlayerJoined);
+      socket.off('player_left', handlePlayerLeft);
       socket.off('join_success', handleJoinSuccess);
       socket.off('join_error', handleJoinError);
       socket.off('game_started', handleGameStarted);
@@ -199,6 +206,29 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
     };
   }, [effectiveRoomCode]);
 
+  const handleLeaveRoom = () => {
+    if (isLeaving) return;
+    setIsLeaving(true);
+
+    if (effectiveRoomCode) {
+      // Tell server this client is leaving voluntarily (if backend handles it).
+      socket.emit('leave_room', { roomCode: effectiveRoomCode, userId: user?.id });
+    }
+  
+    // Clear local room/session markers used by waiting-room and rejoin flow.
+    localStorage.removeItem('joined_group_code');
+    localStorage.removeItem('dc_username');
+    localStorage.setItem('just_left_room', '1');
+  
+    setRoomCode(null);
+    lastJoinedRoomRef.current = null;
+  
+    navigate('/join-group', {
+      replace: true,
+      state: { message: 'You left the room.' },
+    });
+  };
+
   const displayedRoomCode = effectiveRoomCode || 'No group selected';
   const displayedCurrentUser = effectiveCurrentUser;
   const myTeamName = useMemo(() => {
@@ -230,6 +260,15 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
           <div className="sidebar-section">
             <span className="sidebar-section-title">Your Group</span>
             <div className="room-code">{displayedRoomCode}</div>
+            <button
+              type="button"
+              role="tab"
+              className="roster-tabs"
+              disabled={isLeaving}
+              onClick={() => handleLeaveRoom()}
+            >
+              {isLeaving ? 'Leaving...' : 'Leave Room'}
+            </button>
           </div>
 
       <div className="sidebar-section">
