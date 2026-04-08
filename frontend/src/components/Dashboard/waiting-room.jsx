@@ -263,7 +263,7 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
             <button
               type="button"
               role="tab"
-              className="roster-tabs"
+              className="roster-tab leave-room-btn"
               disabled={isLeaving}
               onClick={() => handleLeaveRoom()}
             >
