@@ -260,6 +260,12 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
           <div className="sidebar-section">
             <span className="sidebar-section-title">Your Group</span>
             <div className="room-code">{displayedRoomCode}</div>
+            <div className="status-text" style={{ marginTop: '8px' }}>
+              Your Team:{' '}
+              <span style={{ color: '#2563eb', fontWeight: 700 }}>
+                {myTeamName || 'Not assigned yet'}
+              </span>
+            </div>
             <button
               type="button"
               role="tab"
