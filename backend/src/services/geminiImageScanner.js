@@ -45,7 +45,7 @@ function normalizeReason(reason, fallback) {
 }
 
 function createGeminiImageScanner({
-  apiKey = "AIzaSyD9m5eN_aDhKQG0K_TIAGF1nOlqFTmPJI4",
+  apiKey = process.env.GEMINI_API || process.env.GEMINI_API_KEY || '',
   model = DEFAULT_MODEL,
   endpoint = DEFAULT_ENDPOINT,
   fetchImpl = global.fetch,
@@ -70,7 +70,7 @@ function createGeminiImageScanner({
           provider: 'gemini',
           model,
           scannedAt: new Date().toISOString(),
-          reason: 'Safety scan skipped: GEMINI_API_KEY is not configured.',
+          reason: 'Safety scan skipped: GEMINI_API is not configured.',
         };
       }
 
