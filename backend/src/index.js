@@ -13,7 +13,7 @@ const io = new Server(httpServer, {
   cors: { origin: true },
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 
 app.use(cors());
 // Increase JSON body size limit so base64-encoded image uploads for scavenger hunt work
