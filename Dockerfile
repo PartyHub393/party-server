@@ -1,28 +1,23 @@
-# Use a lightweight Node.js image
-FROM node:20-slim
+FROM node:22.21.1-slim
 
-# Set the working directory
 WORKDIR /app
 
-# Copy package.json files first to leverage Docker cache
-COPY package.json ./
-COPY backend/package*.json ./backend/
-COPY frontend/package*.json ./frontend/
+RUN apt-get update -qq && \
+	apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3 && \
+	rm -rf /var/lib/apt/lists/*
 
-# Install dependencies for both backend and frontend
-RUN npm run install:all
+COPY package.json package-lock.json ./
+COPY backend/package.json backend/package-lock.json ./backend/
+COPY frontend/package.json frontend/package-lock.json ./frontend/
 
-# Copy the rest of your application code
+RUN npm ci --prefix backend && npm ci --prefix frontend
+
 COPY . .
 
-# Build the Vite frontend
-# (This runs "npm run build --prefix frontend" based on your root package.json)
-RUN npm run build
+RUN npm run build --prefix frontend
 
-# Set the port environment variable
 ENV PORT=8080
+
 EXPOSE 8080
 
-# Start the application
-# (This runs "npm run start --prefix backend" based on your root package.json)
-CMD ["npm", "start"]
+CMD ["npm", "start", "--prefix", "backend"]
