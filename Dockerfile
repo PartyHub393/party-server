@@ -6,15 +6,13 @@ RUN apt-get update -qq && \
 	apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3 && \
 	rm -rf /var/lib/apt/lists/*
 
-COPY package.json package-lock.json ./
-COPY backend/package.json backend/package-lock.json ./backend/
-COPY frontend/package.json frontend/package-lock.json ./frontend/
-
-RUN npm ci --prefix backend && npm ci --prefix frontend --include=dev
-
 COPY . .
 
-RUN npm run build --prefix frontend
+RUN npm ci --prefix backend --include=dev && \
+	npm ci --prefix frontend --include=dev && \
+	test -f backend/node_modules/dotenv/package.json && \
+	test -f frontend/node_modules/vite/package.json && \
+	npm run build --prefix frontend
 
 ENV PORT=8080
 
