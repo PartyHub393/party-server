@@ -1,4 +1,4 @@
-app = "discovercase"
+app = "party-server-mxjj8q"
 primary_region = "iad"
 
 [build]
@@ -6,6 +6,9 @@ primary_region = "iad"
 
 [env]
   PORT = "8080"
+
+[deploy]
+  strategy = "immediate"
 
 [http_service]
   internal_port = 8080
