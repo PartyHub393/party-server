@@ -11,8 +11,8 @@ export default defineConfig({
       '.a.run.app'
     ],
     proxy: {
-      '/api': 'http://127.0.0.1:4000',
-      '/socket.io': { target: 'http://127.0.0.1:4000', ws: true },
+      '/api': 'http://127.0.0.1:8080',
+      '/socket.io': { target: 'http://127.0.0.1:8080', ws: true },
     },
   },
 })
