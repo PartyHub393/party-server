@@ -99,8 +99,11 @@ export default function UserWaitingRoom({ roomCode, orientees: initialOrientees,
       applyRoomSnapshot({ players, assignments, scores: scores || {} });
     };
 
-    const handleJoinSuccess = ({ players, assignments, assignmentScores: scores }) => {
+    const handleJoinSuccess = ({ players, assignments, assignmentScores: scores, activeGame: nextActiveGame }) => {
       applyRoomSnapshot({ players, assignments, scores: scores || {} });
+      if (nextActiveGame) {
+        setActiveGame(nextActiveGame);
+      }
     };
 
     const handleAssignmentsUpdated = ({ players, assignments, assignmentScores: scores }) => {

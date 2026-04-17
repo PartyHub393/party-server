@@ -83,11 +83,12 @@ function createFakeIo() {
 test('host_started(trivia) initializes game and broadcasts game_started', () => {
   const io = createFakeIo();
   const { socket, handlers, emits, roomEmits } = createFakeSocket('host-1');
+  const room = { hostId: 'host-1', players: [], activeGame: null };
 
   let initCalledWith = null;
   const { registerGameHandlers } = loadGameHandlersWithMocks({
     roomsMock: {
-      getRoom: () => ({ hostId: 'host-1', players: [] }),
+      getRoom: () => room,
     },
     triviaMock: {
       initializeTriviaGame: (code) => {
@@ -108,11 +109,45 @@ test('host_started(trivia) initializes game and broadcasts game_started', () => 
   handlers.get('host_started')({ roomCode: 'abc123', gameType: 'trivia' });
 
   assert.equal(initCalledWith, 'ABC123');
+  assert.equal(room.activeGame, 'trivia');
   assert.equal(emits.length, 0);
   assert.deepEqual(roomEmits[0], {
     roomCode: 'ABC123',
     event: 'game_started',
     payload: { roomCode: 'ABC123', gameType: 'trivia' },
+  });
+});
+
+test('get_trivia_state returns current question when trivia is active', () => {
+  const io = createFakeIo();
+  const { socket, handlers } = createFakeSocket('player-1');
+  const currentQuestion = { question: 'Q1', options: ['A', 'B', 'C', 'D'] };
+
+  const { registerGameHandlers } = loadGameHandlersWithMocks({
+    roomsMock: {
+      getRoom: () => ({ hostId: 'host-1', players: [], activeGame: 'trivia' }),
+    },
+    triviaMock: {
+      initializeTriviaGame: () => {},
+      getTriviaGame: () => ({ currentQuestion }),
+      setCurrentQuestion: () => {},
+      recordPlayerAnswer: () => {},
+      validateAndAwardPoints: () => ({}),
+      getLeaderboard: () => [],
+      endTriviaGame: () => null,
+    },
+  });
+
+  registerGameHandlers(io, socket);
+
+  let callbackPayload = null;
+  handlers.get('get_trivia_state')({ roomCode: 'abc123' }, (payload) => {
+    callbackPayload = payload;
+  });
+
+  assert.deepEqual(callbackPayload, {
+    activeGame: 'trivia',
+    currentQuestion,
   });
 });
 
@@ -123,7 +158,7 @@ test('broadcast_question host can broadcast; sends new_question', () => {
   let setCurrentQuestionCalled = 0;
   const { registerGameHandlers } = loadGameHandlersWithMocks({
     roomsMock: {
-      getRoom: () => ({ hostId: 'host-1', players: [] }),
+      getRoom: () => ({ hostId: 'host-1', players: [], activeGame: 'trivia' }),
     },
     triviaMock: {
       initializeTriviaGame: () => {},
@@ -210,7 +245,7 @@ test('reveal_answer computes results and emits answer_revealed to room', () => {
 
   const { registerGameHandlers } = loadGameHandlersWithMocks({
     roomsMock: {
-      getRoom: () => ({ hostId: 'host-1', players: [] }),
+      getRoom: () => ({ hostId: 'host-1', players: [], activeGame: 'trivia' }),
     },
     triviaMock: {
       initializeTriviaGame: () => {},
@@ -251,7 +286,7 @@ test('end_game host only; emits game_ended with finalStats', () => {
 
   const { registerGameHandlers } = loadGameHandlersWithMocks({
     roomsMock: {
-      getRoom: () => ({ hostId: 'host-1', players: [] }),
+      getRoom: () => ({ hostId: 'host-1', players: [], activeGame: 'trivia' }),
     },
     triviaMock: {
       initializeTriviaGame: () => {},

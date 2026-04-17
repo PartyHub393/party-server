@@ -44,6 +44,15 @@ function normalizeReason(reason, fallback) {
   return fallback;
 }
 
+function isGeminiBusyResponse(status, errText) {
+  if (status === 503) {
+    return true;
+  }
+
+  const text = typeof errText === 'string' ? errText : '';
+  return /"status"\s*:\s*"UNAVAILABLE"|high demand/i.test(text);
+}
+
 function createGeminiImageScanner({
   apiKey = process.env.GEMINI_API || process.env.GEMINI_API_KEY || '',
   model = DEFAULT_MODEL,
@@ -134,6 +143,21 @@ function createGeminiImageScanner({
 
       if (!response.ok) {
         const errText = await response.text();
+
+        if (isGeminiBusyResponse(response.status, errText)) {
+          return {
+            allowed: true,
+            scanned: false,
+            matchedPrompt: false,
+            provider: 'gemini',
+            model,
+            scannedAt: new Date().toISOString(),
+            reason:
+              'Gemini is busy right now. Submission queued for host manual review.',
+            temporarilyUnavailable: true,
+          };
+        }
+
         throw new Error(`Gemini scan failed (${response.status}): ${errText}`);
       }
 

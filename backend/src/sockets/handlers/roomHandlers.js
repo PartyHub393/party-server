@@ -16,6 +16,7 @@ const {
 } = require('../../rooms');
 const { pool } = require('../../db');
 const { removePlayerFromTrivia } = require('../../games/trivia');
+const { getTriviaGame } = require('../../games/trivia');
 
 function normalizeCode(roomCode) {
   return (roomCode || '').toUpperCase();
@@ -303,11 +304,16 @@ function registerRoomHandlers(io, socket) {
     }
 
     socket.join(code);
+    const activeGame = room.activeGame || null;
+    const triviaState = activeGame === 'trivia' ? getTriviaGame(code) : null;
+
     socket.emit('join_success', {
       roomCode: code,
       players,
       assignments: getRoomAssignments(code),
       assignmentScores: getRoomAssignmentScores(code),
+      activeGame,
+      triviaQuestion: triviaState?.currentQuestion || null,
     });
     socket.to(code).emit('player_joined', {
       players,

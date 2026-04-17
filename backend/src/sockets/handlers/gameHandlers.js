@@ -37,7 +37,27 @@ function registerGameHandlers(io, socket) {
       initializeTriviaGame(code);
     }
 
+    room.activeGame = game;
+
     socket.to(code).emit('game_started', { roomCode: code, gameType: game });
+  });
+
+  socket.on('get_trivia_state', ({ roomCode }, callback) => {
+    const code = normalizeCode(roomCode);
+    const room = getRoom(code);
+
+    if (!room || room.activeGame !== 'trivia') {
+      if (callback) callback({ activeGame: room?.activeGame || null, currentQuestion: null });
+      return;
+    }
+
+    const trivia = getTriviaGame(code);
+    if (callback) {
+      callback({
+        activeGame: room.activeGame,
+        currentQuestion: trivia?.currentQuestion || null,
+      });
+    }
   });
 
   socket.on('broadcast_question', ({ roomCode, question, options, timeLimit, questionLimit }) => {
@@ -126,7 +146,8 @@ function registerGameHandlers(io, socket) {
       return;
     }
 
-    const finalStats = endTriviaGame(code);
+    const finalStats = room.activeGame === 'trivia' ? endTriviaGame(code) : null;
+    room.activeGame = null;
     io.to(code).emit('game_ended', { finalStats });
   });
 }

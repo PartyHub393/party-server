@@ -81,6 +81,21 @@ export default function useTriviaGame({ username: initialUsername } = {}) {
   }, [socket])
 
   useEffect(() => {
+    if (!socket || !connected || !roomCode) return
+
+    socket.emit('get_trivia_state', { roomCode }, (response = {}) => {
+      if (response.activeGame !== 'trivia') return
+      if (!response.currentQuestion) return
+
+      setQuestion(response.currentQuestion)
+      setSelected(null)
+      setAnswerRevealed(false)
+      setRevealAnswer(null)
+      setStatus('')
+    })
+  }, [socket, connected, roomCode])
+
+  useEffect(() => {
     if (!question || answerRevealed) return
     if (timeLeft <= 0) return
     const timerId = setTimeout(() => {

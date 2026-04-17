@@ -142,11 +142,17 @@ export default function ScavengerHostPanel() {
 function SubmissionCard({ sub, title, isEditing, isReviewing, commentDraft, onCommentChange, onApprove, onDeny, onEditToggle }) {
   const statusCls = sub.approved === true ? 'sh-card--approved' : sub.approved === false ? 'sh-card--denied' : '';
   const scan = sub.safetyScan || null;
+  const scanUnavailable = Boolean(scan && scan.scanned === false);
   const scanVerdict = !scan
     ? 'No scan data'
-    : scan.allowed === true
+    : scanUnavailable
+      ? 'Gemini unavailable - host review'
+      : scan.allowed === true
       ? 'Gemini pass'
       : 'Gemini flagged';
+  const scanClass = scan && scan.allowed === true && !scanUnavailable
+    ? 'sh-card__scan--pass'
+    : 'sh-card__scan--flagged';
 
   return (
     <div className={`sh-card ${statusCls}`}>
@@ -158,7 +164,7 @@ function SubmissionCard({ sub, title, isEditing, isReviewing, commentDraft, onCo
       <img className="sh-card__img" src={sub.imageData} alt={title} />
 
       {scan && (
-        <div className={`sh-card__scan ${scan.allowed ? 'sh-card__scan--pass' : 'sh-card__scan--flagged'}`}>
+        <div className={`sh-card__scan ${scanClass}`}>
           <p className="sh-card__scan-title">{scanVerdict}</p>
           <p className="sh-card__scan-meta">
             {scan.provider || 'scanner'} {scan.model ? `(${scan.model})` : ''}
