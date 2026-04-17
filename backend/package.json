@@ -4,7 +4,7 @@
   "description": "Node.js/Express backend with PostgreSQL",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
+    "start": "npm --prefix ../frontend run build && node src/index.js",
     "dev": "node --watch src/index.js",
     "test": "node --test \"tests/**/*.test.js\""
   },
