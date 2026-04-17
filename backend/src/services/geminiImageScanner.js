@@ -74,12 +74,13 @@ function createGeminiImageScanner({
       if (!enabled) {
         return {
           allowed: true,
-          scanned: true,
-          matchedPrompt: true,
+          scanned: false,
+          matchedPrompt: false,
           provider: 'gemini',
           model,
           scannedAt: new Date().toISOString(),
-          reason: 'Safety scan skipped: GEMINI_API is not configured.',
+          reason: 'Safety scan unavailable: GEMINI_API is not configured. Submission queued for host manual review.',
+          temporarilyUnavailable: true,
         };
       }
 

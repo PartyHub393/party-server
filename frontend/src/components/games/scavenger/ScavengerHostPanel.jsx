@@ -4,9 +4,11 @@ import {
   getScavengerState,
   reviewScavengerSubmission,
 } from '../../../api';
+import { useSocket } from '../../../useSocket';
 import './ScavengerHostPanel.css';
 
 export default function ScavengerHostPanel() {
+  const { roomCode } = useSocket();
   const [challenges, setChallenges] = useState(null);
   const [state, setState] = useState(null);
   const [error, setError] = useState('');
@@ -17,7 +19,10 @@ export default function ScavengerHostPanel() {
   useEffect(() => {
     async function load() {
       try {
-        const [cd, sd] = await Promise.all([getScavengerChallenges(), getScavengerState()]);
+        const [cd, sd] = await Promise.all([
+          getScavengerChallenges(),
+          getScavengerState({ groupCode: roomCode || undefined }),
+        ]);
         setChallenges(cd);
         setState(sd);
       } catch (err) {
@@ -25,18 +30,18 @@ export default function ScavengerHostPanel() {
       }
     }
     load();
-  }, []);
+  }, [roomCode]);
 
   useEffect(() => {
     let cancelled = false;
     const id = setInterval(async () => {
       try {
-        const sd = await getScavengerState();
+        const sd = await getScavengerState({ groupCode: roomCode || undefined });
         if (!cancelled) setState(sd);
       } catch {}
     }, 5000);
     return () => { cancelled = true; clearInterval(id); };
-  }, []);
+  }, [roomCode]);
 
   function getChallengeTitle(challengeId) {
     if (!challenges?.categories) return challengeId;
@@ -52,7 +57,12 @@ export default function ScavengerHostPanel() {
     setReviewingId(submissionId);
     setError('');
     try {
-      const { state: newState } = await reviewScavengerSubmission({ submissionId, approved, comment });
+      const { state: newState } = await reviewScavengerSubmission({
+        submissionId,
+        approved,
+        comment,
+        groupCode: roomCode || undefined,
+      });
       setState(newState);
       setEditingId(null);
       setCommentDrafts((prev) => { const n = { ...prev }; delete n[submissionId]; return n; });

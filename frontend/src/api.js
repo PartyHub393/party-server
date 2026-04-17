@@ -158,12 +158,13 @@ export async function getScavengerChallenges() {
 
 export async function getScavengerState() {
   let res
-  const groupCode = localStorage.getItem('joined_group_code')
+  const groupCode = localStorage.getItem('joined_group_code') || localStorage.getItem('host_room_code')
   const qs = groupCode ? `?groupCode=${encodeURIComponent(groupCode)}` : ''
   try {
     res = await fetch(`${API_BASE}/api/scavenger/state${qs}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
+      cache: 'no-store',
     })
   } catch (err) {
     throw new Error('Cannot reach server. Is the backend running on port 3000?')
@@ -175,7 +176,7 @@ export async function getScavengerState() {
 
 export async function setScavengerTeamName(teamName) {
   let res
-  const groupCode = localStorage.getItem('joined_group_code')
+  const groupCode = localStorage.getItem('joined_group_code') || localStorage.getItem('host_room_code')
   const qs = groupCode ? `?groupCode=${encodeURIComponent(groupCode)}` : ''
   try {
     res = await fetch(`${API_BASE}/api/scavenger/team${qs}`, {
@@ -193,7 +194,7 @@ export async function setScavengerTeamName(teamName) {
 
 export async function submitScavengerPhoto({ challengeId, imageData, playerName }) {
   let res
-  const groupCode = localStorage.getItem('joined_group_code')
+  const groupCode = localStorage.getItem('joined_group_code') || localStorage.getItem('host_room_code')
   const qs = groupCode ? `?groupCode=${encodeURIComponent(groupCode)}` : ''
   try {
     res = await fetch(`${API_BASE}/api/scavenger/submit${qs}`, {
@@ -211,7 +212,7 @@ export async function submitScavengerPhoto({ challengeId, imageData, playerName 
 
 export async function reviewScavengerSubmission({ submissionId, approved, comment }) {
   let res
-  const groupCode = localStorage.getItem('joined_group_code')
+  const groupCode = localStorage.getItem('joined_group_code') || localStorage.getItem('host_room_code')
   const qs = groupCode ? `?groupCode=${encodeURIComponent(groupCode)}` : ''
   try {
     res = await fetch(`${API_BASE}/api/scavenger/review${qs}`, {
@@ -229,7 +230,7 @@ export async function reviewScavengerSubmission({ submissionId, approved, commen
 
 export async function cancelScavengerSubmission({ submissionId }) {
   let res
-  const groupCode = localStorage.getItem('joined_group_code')
+  const groupCode = localStorage.getItem('joined_group_code') || localStorage.getItem('host_room_code')
   const qs = groupCode ? `?groupCode=${encodeURIComponent(groupCode)}` : ''
   try {
     res = await fetch(`${API_BASE}/api/scavenger/cancel${qs}`, {

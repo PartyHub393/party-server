@@ -28,6 +28,12 @@ app.use(cors());
 // Increase JSON body size limit so base64-encoded image uploads for scavenger hunt work
 app.use(express.json({ limit: '10mb' }));
 
+// Prevent browser caching for API routes
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  next();
+});
+
 app.use('/', apiRoutes);
 app.use(express.static(frontendDistPath));
 
